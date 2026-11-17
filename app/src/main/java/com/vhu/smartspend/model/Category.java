@@ -3,5 +3,72 @@ package com.vhu.smartspend.model;
 import java.io.Serializable;
 
 public class Category implements Serializable {
-    // TODO: Khai báo các thuộc tính, constructor và getter/setter cho Category
+    private static final long serialVersionUID = 1L;
+
+    public static final String TYPE_EXPENSE = "EXPENSE";
+    public static final String TYPE_INCOME = "INCOME";
+
+    private int categoryId;
+    private String name;
+    private String type;
+    private String iconName;
+    private String colorCode;
+
+    public Category() {
+    }
+
+    public Category(String name, String type, String iconName, String colorCode) {
+        this.name = name;
+        this.type = type;
+        this.iconName = iconName;
+        this.colorCode = colorCode;
+    }
+
+    public Category(int categoryId, String name, String type, String iconName, String colorCode) {
+        this.categoryId = categoryId;
+        this.name = name;
+        this.type = type;
+        this.iconName = iconName;
+        this.colorCode = colorCode;
+    }
+
+    public int getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(int categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getIconName() {
+        return iconName;
+    }
+
+    public void setIconName(String iconName) {
+        this.iconName = iconName;
+    }
+
+    public String getColorCode() {
+        return colorCode;
+    }
+
+    public void setColorCode(String colorCode) {
+        this.colorCode = colorCode;
+    }
 }
