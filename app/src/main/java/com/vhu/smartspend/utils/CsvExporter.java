@@ -8,7 +8,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 
-import com.vhu.smartspend.db.DatabaseHelper;
+import com.vhu.smartspend.database.DatabaseHelper;
 
 import java.io.File;
 import java.io.FileOutputStream;

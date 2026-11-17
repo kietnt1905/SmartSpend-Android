@@ -17,7 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.adapter.CategoryGridAdapter;
-import com.vhu.smartspend.dao.CategoryDAO;
+import com.vhu.smartspend.database.CategoryDAO;
 import com.vhu.smartspend.model.Category;
 import com.vhu.smartspend.utils.SessionManager;
 

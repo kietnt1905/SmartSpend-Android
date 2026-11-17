@@ -11,7 +11,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.vhu.smartspend.R;
-import com.vhu.smartspend.dao.UserDAO;
+import com.vhu.smartspend.database.UserDAO;
 import com.vhu.smartspend.model.User;
 import com.vhu.smartspend.utils.SessionManager;
 

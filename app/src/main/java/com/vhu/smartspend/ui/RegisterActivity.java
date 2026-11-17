@@ -9,7 +9,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.vhu.smartspend.R;
-import com.vhu.smartspend.dao.UserDAO;
+import com.vhu.smartspend.database.UserDAO;
 
 public class RegisterActivity extends AppCompatActivity {
     private EditText edtUsername, edtPassword, edtConfirm;
