@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">SmartSpend</string>
+    <string name="login_title">ĐĂNG NHẬP</string>
+    <string name="register_title">ĐĂNG KÝ TÀI KHOẢN</string>
 </resources>
