@@ -50,17 +50,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE, " +
                 "FOREIGN KEY(category_id) REFERENCES categories(category_id))");
 
-        // 4. Bảng Budgets (Ngân sách theo danh mục & tháng)
-        db.execSQL("CREATE TABLE budgets (" +
-                "budget_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "user_id INTEGER NOT NULL, " +
-                "category_id INTEGER, " +
-                "month_year TEXT NOT NULL, " +
-                "limit_amount REAL NOT NULL, " +
-                "alert_percent INTEGER DEFAULT 80, " +
-                "FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE, " +
-                "FOREIGN KEY(category_id) REFERENCES categories(category_id) ON DELETE CASCADE)");
-
         // Chèn dữ liệu mẫu (Seed data) phục vụ test và demo ngay lập tức
         db.execSQL("INSERT INTO users (username, password, full_name, role, monthly_budget_limit) " +
                 "VALUES ('kietvhu', '123456', 'Nguyễn Tuấn Kiệt', 'ADMIN', 4500000)");
@@ -75,7 +64,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS budgets");
         db.execSQL("DROP TABLE IF EXISTS transactions");
         db.execSQL("DROP TABLE IF EXISTS categories");
         db.execSQL("DROP TABLE IF EXISTS users");

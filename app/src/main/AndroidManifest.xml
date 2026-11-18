@@ -18,12 +18,6 @@
             android:name=".ui.RegisterActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.AddEditTransactionActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.TransactionDetailActivity"
-            android:exported="false" />
-        <activity
             android:name=".ui.CategoryManageActivity"
             android:exported="false" />
         <activity

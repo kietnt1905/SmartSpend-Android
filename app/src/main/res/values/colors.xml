@@ -2,4 +2,22 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Màu chủ đạo xanh lá sẫm đồng bộ với mẫu -->
+    <color name="primary">#0A5C36</color>
+    <color name="primary_dark">#053820</color>
+    <color name="colorAccent">#4CAF50</color>
+
+    <color name="green_main">#0A5C36</color>
+    <color name="green_light">#E8F5E9</color>
+    <color name="red_main">#D32F2F</color>
+    <color name="red_light">#FFEBEE</color>
+    <color name="orange_main">#F57C00</color>
+    <color name="orange_light">#FFF3E0</color>
+    <color name="blue_main">#1976D2</color>
+    <color name="blue_light">#E3F2FD</color>
+    <color name="gray_bg">#F8F9FA</color>
+    <color name="gray_card">#FFFFFF</color>
+    <color name="gray_text">#616161</color>
+    <color name="gray_border">#E0E0E0</color>
 </resources>
