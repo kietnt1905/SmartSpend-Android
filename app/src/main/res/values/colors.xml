@@ -20,4 +20,12 @@
     <color name="gray_card">#FFFFFF</color>
     <color name="gray_text">#616161</color>
     <color name="gray_border">#E0E0E0</color>
+
+    <!-- Màu màn hình Cài đặt (Light Mode) -->
+    <color name="setting_bg">#F6F8FA</color>
+    <color name="setting_card">#FFFFFF</color>
+    <color name="setting_text_primary">#1A1A1A</color>
+    <color name="setting_text_secondary">#757575</color>
+    <color name="setting_divider">#F1F5F9</color>
+    <color name="setting_pill_bg">#F1F5F9</color>
 </resources>

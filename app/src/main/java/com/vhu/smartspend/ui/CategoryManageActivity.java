@@ -1,12 +1,17 @@
 package com.vhu.smartspend.ui;
 
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.Gravity;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -23,11 +28,31 @@ import java.util.List;
 
 public class CategoryManageActivity extends AppCompatActivity {
 
-    private EditText edtCategoryName, edtCategoryIcon, edtCategoryColor;
+    private static final String[] SAMPLE_ICON_NAMES = {
+            "ic_food", "ic_school", "ic_shopping", "ic_transport", "ic_award", "ic_work"
+    };
+    private static final String[] SAMPLE_ICON_EMOJIS = {
+            "🍔", "📚", "🛒", "🚗", "🎓", "💼"
+    };
+    private static final String[] SAMPLE_COLORS = {
+            "#0A5C36", "#FF5722", "#2196F3", "#9C27B0",
+            "#009688", "#4CAF50", "#FFC107", "#E91E63",
+            "#3F51B5", "#FF9800", "#795548", "#00BCD4"
+    };
+
+    private EditText edtCategoryName;
+    private TextView tvCategoryPreview;
+    private LinearLayout layoutIconPicker, layoutColorPicker;
     private RadioGroup rgCategoryType;
     private RadioButton rbExpense, rbIncome;
     private Button btnAddCategory, btnUpdateCategory, btnDeleteCategory, btnClearCategory;
     private GridView gvCategories;
+
+    private final List<TextView> iconViews = new ArrayList<>();
+    private final List<TextView> colorViews = new ArrayList<>();
+
+    private String selectedIconName = SAMPLE_ICON_NAMES[0];
+    private String selectedColorHex = SAMPLE_COLORS[0];
 
     private CategoryDAO categoryDAO;
     private SessionManager sessionManager;
@@ -44,8 +69,12 @@ public class CategoryManageActivity extends AppCompatActivity {
         sessionManager = new SessionManager(this);
 
         initViews();
+        setupIconPicker();
+        setupColorPicker();
+        refreshPickerSelection();
         loadCategories();
 
+        findViewById(R.id.btnBackCategory).setOnClickListener(v -> finish());
         btnAddCategory.setOnClickListener(v -> addCategory());
         btnUpdateCategory.setOnClickListener(v -> updateCategory());
         btnDeleteCategory.setOnClickListener(v -> deleteCategory());
@@ -64,9 +93,10 @@ public class CategoryManageActivity extends AppCompatActivity {
     }
 
     private void initViews() {
+        tvCategoryPreview = findViewById(R.id.tvCategoryPreview);
         edtCategoryName = findViewById(R.id.edtCategoryName);
-        edtCategoryIcon = findViewById(R.id.edtCategoryIcon);
-        edtCategoryColor = findViewById(R.id.edtCategoryColor);
+        layoutIconPicker = findViewById(R.id.layoutIconPicker);
+        layoutColorPicker = findViewById(R.id.layoutColorPicker);
         rgCategoryType = findViewById(R.id.rgCategoryType);
         rbExpense = findViewById(R.id.rbExpense);
         rbIncome = findViewById(R.id.rbIncome);
@@ -79,6 +109,121 @@ public class CategoryManageActivity extends AppCompatActivity {
         categoryList = new ArrayList<>();
         gridAdapter = new CategoryGridAdapter(this, categoryList);
         gvCategories.setAdapter(gridAdapter);
+    }
+
+    private void setupIconPicker() {
+        layoutIconPicker.removeAllViews();
+        iconViews.clear();
+
+        int heightPx = dpToPx(42);
+        int marginPx = dpToPx(4);
+
+        for (int i = 0; i < SAMPLE_ICON_NAMES.length; i++) {
+            final String iconName = SAMPLE_ICON_NAMES[i];
+            TextView tv = new TextView(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, heightPx, 1f);
+            if (i < SAMPLE_ICON_NAMES.length - 1) {
+                params.setMarginEnd(marginPx);
+            }
+            tv.setLayoutParams(params);
+            tv.setGravity(Gravity.CENTER);
+            tv.setText(SAMPLE_ICON_EMOJIS[i]);
+            tv.setTextSize(19f);
+            tv.setClickable(true);
+            tv.setFocusable(true);
+            tv.setOnClickListener(v -> {
+                selectedIconName = iconName;
+                refreshPickerSelection();
+            });
+
+            iconViews.add(tv);
+            layoutIconPicker.addView(tv);
+        }
+    }
+
+    private void setupColorPicker() {
+        layoutColorPicker.removeAllViews();
+        colorViews.clear();
+
+        int sizePx = dpToPx(34);
+        int marginPx = dpToPx(8);
+
+        for (int i = 0; i < SAMPLE_COLORS.length; i++) {
+            final String colorHex = SAMPLE_COLORS[i];
+            TextView tv = new TextView(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(sizePx, sizePx);
+            if (i < SAMPLE_COLORS.length - 1) {
+                params.setMarginEnd(marginPx);
+            }
+            tv.setLayoutParams(params);
+            tv.setGravity(Gravity.CENTER);
+            tv.setTextColor(Color.WHITE);
+            tv.setTextSize(14f);
+            tv.setClickable(true);
+            tv.setFocusable(true);
+            tv.setOnClickListener(v -> {
+                selectedColorHex = colorHex;
+                refreshPickerSelection();
+            });
+
+            colorViews.add(tv);
+            layoutColorPicker.addView(tv);
+        }
+    }
+
+    private void refreshPickerSelection() {
+        // Highlight icon đang chọn
+        for (int i = 0; i < SAMPLE_ICON_NAMES.length; i++) {
+            boolean isSelected = SAMPLE_ICON_NAMES[i].equalsIgnoreCase(selectedIconName);
+            GradientDrawable bg = new GradientDrawable();
+            bg.setCornerRadius(dpToPx(10));
+            bg.setColor(isSelected ? Color.parseColor("#E8F5E9") : Color.parseColor("#F5F5F5"));
+            bg.setStroke(dpToPx(isSelected ? 2 : 1), Color.parseColor(isSelected ? "#0A5C36" : "#E0E0E0"));
+            iconViews.get(i).setBackground(bg);
+        }
+
+        // Highlight màu đang chọn
+        for (int i = 0; i < SAMPLE_COLORS.length; i++) {
+            boolean isSelected = SAMPLE_COLORS[i].equalsIgnoreCase(selectedColorHex);
+            TextView tv = colorViews.get(i);
+            GradientDrawable circle = new GradientDrawable();
+            circle.setShape(GradientDrawable.OVAL);
+            circle.setColor(Color.parseColor(SAMPLE_COLORS[i]));
+            if (isSelected) {
+                circle.setStroke(dpToPx(3), Color.parseColor("#212121"));
+                tv.setText("✓");
+            } else {
+                circle.setStroke(dpToPx(1), Color.parseColor("#E0E0E0"));
+                tv.setText("");
+            }
+            tv.setBackground(circle);
+        }
+
+        // Cập nhật vòng tròn xem trước
+        tvCategoryPreview.setText(getEmojiByIconName(selectedIconName));
+        GradientDrawable previewBg = new GradientDrawable();
+        previewBg.setShape(GradientDrawable.OVAL);
+        try {
+            previewBg.setColor(Color.parseColor(selectedColorHex));
+        } catch (Exception e) {
+            previewBg.setColor(Color.parseColor("#0A5C36"));
+        }
+        tvCategoryPreview.setBackground(previewBg);
+    }
+
+    private String getEmojiByIconName(String iconName) {
+        if (iconName != null) {
+            for (int i = 0; i < SAMPLE_ICON_NAMES.length; i++) {
+                if (SAMPLE_ICON_NAMES[i].equalsIgnoreCase(iconName)) {
+                    return SAMPLE_ICON_EMOJIS[i];
+                }
+            }
+        }
+        return SAMPLE_ICON_EMOJIS[0];
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     private void loadCategories() {
@@ -94,16 +239,7 @@ public class CategoryManageActivity extends AppCompatActivity {
         }
 
         String type = rbIncome.isChecked() ? Category.TYPE_INCOME : Category.TYPE_EXPENSE;
-        String icon = edtCategoryIcon.getText().toString().trim();
-        if (TextUtils.isEmpty(icon)) {
-            icon = type.equals(Category.TYPE_INCOME) ? "ic_work" : "ic_food";
-        }
-        String color = edtCategoryColor.getText().toString().trim();
-        if (TextUtils.isEmpty(color)) {
-            color = type.equals(Category.TYPE_INCOME) ? "#4CAF50" : "#FF5722";
-        }
-
-        Category cat = new Category(name, type, icon, color);
+        Category cat = new Category(name, type, selectedIconName, selectedColorHex);
         long result = categoryDAO.insertCategory(cat);
         if (result > 0) {
             Toast.makeText(this, "Thêm danh mục thành công!", Toast.LENGTH_SHORT).show();
@@ -127,13 +263,10 @@ public class CategoryManageActivity extends AppCompatActivity {
         }
 
         String type = rbIncome.isChecked() ? Category.TYPE_INCOME : Category.TYPE_EXPENSE;
-        String icon = edtCategoryIcon.getText().toString().trim();
-        String color = edtCategoryColor.getText().toString().trim();
-
         selectedCategory.setName(name);
         selectedCategory.setType(type);
-        selectedCategory.setIconName(icon);
-        selectedCategory.setColorCode(color);
+        selectedCategory.setIconName(selectedIconName);
+        selectedCategory.setColorCode(selectedColorHex);
 
         int rows = categoryDAO.updateCategory(selectedCategory);
         if (rows > 0) {
@@ -186,15 +319,17 @@ public class CategoryManageActivity extends AppCompatActivity {
         } else {
             rbExpense.setChecked(true);
         }
-        edtCategoryIcon.setText(cat.getIconName());
-        edtCategoryColor.setText(cat.getColorCode());
+        selectedIconName = !TextUtils.isEmpty(cat.getIconName()) ? cat.getIconName() : SAMPLE_ICON_NAMES[0];
+        selectedColorHex = !TextUtils.isEmpty(cat.getColorCode()) ? cat.getColorCode() : SAMPLE_COLORS[0];
+        refreshPickerSelection();
     }
 
     private void resetInputs() {
         selectedCategory = null;
         edtCategoryName.setText("");
         rbExpense.setChecked(true);
-        edtCategoryIcon.setText("");
-        edtCategoryColor.setText("");
+        selectedIconName = SAMPLE_ICON_NAMES[0];
+        selectedColorHex = SAMPLE_COLORS[0];
+        refreshPickerSelection();
     }
 }
