@@ -37,6 +37,7 @@ public class HomeFragment extends Fragment {
     private NestedScrollView nestedScrollViewHome;
     private TextView tvUserName, tvTotalBalanceMain, tvHomeIncome, tvHomeExpense;
     private LinearLayout btnActionAdd, btnActionBudget, btnActionReport;
+    private View fabAddTransaction;
     private BudgetDAO budgetDAO;
     private final int currentUserId = 1;
 
@@ -74,20 +75,21 @@ public class HomeFragment extends Fragment {
         tvTotalBalanceMain = view.findViewById(R.id.tvTotalBalanceMain);
         tvHomeIncome = view.findViewById(R.id.tvHomeIncome);
         tvHomeExpense = view.findViewById(R.id.tvHomeExpense);
-
-        btnActionAdd = view.findViewById(R.id.btnActionAdd);
-        btnActionBudget = view.findViewById(R.id.btnActionBudget);
-        btnActionReport = view.findViewById(R.id.btnActionReport);
+        fabAddTransaction = view.findViewById(R.id.fabAddTransaction);
     }
 
     private void setupClickListeners() {
+        View.OnClickListener addTransactionListener = v -> {
+            if (getActivity() != null) {
+                Intent intent = new Intent(getActivity(), AddEditTransactionActivity.class);
+                startActivity(intent);
+            }
+        };
         if (btnActionAdd != null) {
-            btnActionAdd.setOnClickListener(v -> {
-                if (getActivity() != null) {
-                    Intent intent = new Intent(getActivity(), AddEditTransactionActivity.class);
-                    startActivity(intent);
-                }
-            });
+            btnActionAdd.setOnClickListener(addTransactionListener);
+        }
+        if (fabAddTransaction != null) {
+            fabAddTransaction.setOnClickListener(addTransactionListener);
         }
 
         if (btnActionBudget != null || btnActionReport != null) {

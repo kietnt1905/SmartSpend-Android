@@ -596,6 +596,78 @@ public class BudgetDAO {
         return list;
     }
 
+    /**
+     * Tính tổng thu hoặc chi theo tiền tố ngày (yyyy-MM cho tháng hoặc yyyy cho năm).
+     */
+    public double getTotalAmountByDatePrefix(int userId, String type, String datePrefix) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        double total = 0.0;
+        Cursor cursor = null;
+        try {
+            String sql = "SELECT COALESCE(SUM(t.amount), 0) " +
+                    "FROM transactions t " +
+                    "INNER JOIN categories c ON t.category_id = c.category_id " +
+                    "WHERE t.user_id = ? AND c.type = ? AND t.transaction_date LIKE ? || '%'";
+            cursor = db.rawQuery(sql, new String[]{String.valueOf(userId), type, datePrefix});
+            if (cursor != null && cursor.moveToFirst()) {
+                total = cursor.getDouble(0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Lỗi khi getTotalAmountByDatePrefix: " + e.getMessage(), e);
+        } finally {
+            if (cursor != null) cursor.close();
+            db.close();
+        }
+        return total;
+    }
+
+    /**
+     * Thống kê tổng tiền và số lượng giao dịch theo từng danh mục (EXPENSE hoặc INCOME)
+     * trong khoảng thời gian theo tiền tố ngày (yyyy-MM hoặc yyyy).
+     */
+    public List<CategorySummary> getCategorySummaryByDatePrefix(int userId, String type, String datePrefix) {
+        List<CategorySummary> list = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            String sql = "SELECT c.category_id, c.name, c.icon_name, c.color_code, " +
+                    "COUNT(t.transaction_id) AS tx_count, COALESCE(SUM(t.amount), 0) AS total_amount " +
+                    "FROM transactions t " +
+                    "INNER JOIN categories c ON t.category_id = c.category_id " +
+                    "WHERE t.user_id = ? AND c.type = ? AND t.transaction_date LIKE ? || '%' " +
+                    "GROUP BY c.category_id, c.name, c.icon_name, c.color_code " +
+                    "ORDER BY total_amount DESC";
+            cursor = db.rawQuery(sql, new String[]{String.valueOf(userId), type, datePrefix});
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    CategorySummary item = new CategorySummary();
+                    item.categoryId = cursor.getInt(cursor.getColumnIndexOrThrow("category_id"));
+                    item.name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                    item.iconName = cursor.getString(cursor.getColumnIndexOrThrow("icon_name"));
+                    item.colorCode = cursor.getString(cursor.getColumnIndexOrThrow("color_code"));
+                    item.transactionCount = cursor.getInt(cursor.getColumnIndexOrThrow("tx_count"));
+                    item.totalAmount = cursor.getDouble(cursor.getColumnIndexOrThrow("total_amount"));
+                    list.add(item);
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Lỗi khi getCategorySummaryByDatePrefix: " + e.getMessage(), e);
+        } finally {
+            if (cursor != null) cursor.close();
+            db.close();
+        }
+        return list;
+    }
+
+    public static class CategorySummary {
+        public int categoryId;
+        public String name;
+        public String iconName;
+        public String colorCode;
+        public int transactionCount;
+        public double totalAmount;
+    }
+
     // =========================================================================
     // HELPER PRIVATE METHOD
     // =========================================================================

@@ -1,29 +1,24 @@
 package com.vhu.smartspend.ui;
 
-import android.app.DatePickerDialog;
-
 import android.graphics.Color;
-
 import android.graphics.Typeface;
 import android.graphics.drawable.ClipDrawable;
 import android.graphics.drawable.ColorDrawable;
-
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-
 import android.widget.LinearLayout;
+import android.widget.NumberPicker;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
 import androidx.cardview.widget.CardView;
 import androidx.core.widget.NestedScrollView;
@@ -33,6 +28,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.database.BudgetDAO;
+import com.vhu.smartspend.model.Category;
 import com.vhu.smartspend.utils.Budget503020Dialog;
 
 import java.text.DecimalFormat;
@@ -43,47 +39,45 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Màn hình Thống kê Chi tiêu (StatisticFragment)
- * Đảm bảo giao diện cuộn mượt từ đầu trang (Top), tích hợp tính năng nâng cao:
- * - Tìm kiếm giao dịch tức thời (SearchView)
- * - Tự động phân chia ngân sách theo quy tắc 50/30/20 (FinWise AI Dialog)
+ * Màn hình Thống kê Thu / Chi (StatisticFragment)
+ * - Lọc theo Tháng / Năm với hộp thoại chọn chỉ Tháng & Năm
+ * - Tách riêng chế độ xem Chi tiêu và Thu nhập
+ * - Thẻ tổng quan gọn, đồng bộ theo loại đang xem
  *
  * Tác giả: Lê Phúc Thịnh (MSSV: 231A290032)
  */
 public class StatisticFragment extends Fragment {
 
-    // Tab lọc mốc thời gian
-    private static final int TAB_WEEK = 0;
-    private static final int TAB_MONTH = 1;
-    private static final int TAB_YEAR = 2;
-    private static final int TAB_CUSTOM = 3;
+    private static final int TAB_MONTH = 0;
+    private static final int TAB_YEAR = 1;
+
+    private static final int TYPE_EXPENSE = 0;
+    private static final int TYPE_INCOME = 1;
 
     // View Components
     private NestedScrollView nestedScrollView;
-    private Spinner spWalletFilter;
-    private TextView tabWeek, tabMonth, tabYear, tabCustom;
+    private TextView tabMonth, tabYear;
+    private TextView tabExpense, tabIncome;
     private TextView btnPrevDate, btnNextDate, tvDateRangeDisplay;
     private CardView cardDateRangePicker;
-    private TextView pillExpense, pillIncome, pillAll;
-    private TextView tvTotalExpenseMain, tvComparisonBadge;
-    private TextView tvTotalIncome, tvNetBalance;
-    private TextView tvAdviceText;
-    private TextView tvEmptyState;
+
+    private TextView tvOverviewTitle, tvComparisonBadge, tvTotalExpenseMain;
+    private TextView tvOverviewSubLabel, tvTotalIncome, tvNetBalance;
+    private TextView tvCategorySectionTitle, tvAdviceText, tvEmptyState;
     private SearchView svTransactionSearch;
     private TextView btn503020Rule;
     private RecyclerView rvCategorySpending;
 
-    // Category List Data
+    // Data
     private List<CategoryDetailItem> allCategoryItems = new ArrayList<>();
     private CategoryAdapter categoryAdapter;
 
     // Database & Calendar
     private BudgetDAO budgetDAO;
-    private Calendar currentCalendar;
     private int selectedYear;
-    private int selectedMonth; // 0-based
-    private int selectedDay;
+    private int selectedMonth; // 0-based (0..11)
     private int currentTab = TAB_MONTH;
+    private int currentType = TYPE_EXPENSE;
     private final int currentUserId = 1;
 
     public StatisticFragment() {
@@ -104,14 +98,14 @@ public class StatisticFragment extends Fragment {
         if (getContext() != null) {
             budgetDAO = new BudgetDAO(getContext());
         }
-        currentCalendar = Calendar.getInstance();
+        Calendar currentCalendar = Calendar.getInstance();
         selectedYear = currentCalendar.get(Calendar.YEAR);
         selectedMonth = currentCalendar.get(Calendar.MONTH);
-        selectedDay = currentCalendar.get(Calendar.DAY_OF_MONTH);
 
         initViews(view);
         setupTimeFilterTabs();
-        setupDatePicker();
+        setupTypeFilterTabs();
+        setupMonthYearPicker();
         setupInstantSearchView();
         setupBudget503020Rule();
 
@@ -119,32 +113,39 @@ public class StatisticFragment extends Fragment {
 
         loadStatisticData();
 
-        // Cuộn lên đầu trang khi khởi tạo giao diện
         if (nestedScrollView != null) {
             nestedScrollView.post(() -> nestedScrollView.scrollTo(0, 0));
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (budgetDAO != null) {
+            loadStatisticData();
+        }
+    }
+
     private void initViews(View view) {
         nestedScrollView = view.findViewById(R.id.nestedScrollView);
-        tabWeek = view.findViewById(R.id.tabWeek);
         tabMonth = view.findViewById(R.id.tabMonth);
         tabYear = view.findViewById(R.id.tabYear);
-        tabCustom = view.findViewById(R.id.tabCustom);
+        tabExpense = view.findViewById(R.id.tabExpense);
+        tabIncome = view.findViewById(R.id.tabIncome);
 
         btnPrevDate = view.findViewById(R.id.btnPrevDate);
         btnNextDate = view.findViewById(R.id.btnNextDate);
         tvDateRangeDisplay = view.findViewById(R.id.tvDateRangeDisplay);
         cardDateRangePicker = view.findViewById(R.id.cardDateRangePicker);
 
-        pillExpense = view.findViewById(R.id.pillExpense);
-        pillIncome = view.findViewById(R.id.pillIncome);
-        pillAll = view.findViewById(R.id.pillAll);
-
-        tvTotalExpenseMain = view.findViewById(R.id.tvTotalExpenseMain);
+        tvOverviewTitle = view.findViewById(R.id.tvOverviewTitle);
         tvComparisonBadge = view.findViewById(R.id.tvComparisonBadge);
+        tvTotalExpenseMain = view.findViewById(R.id.tvTotalExpenseMain);
+        tvOverviewSubLabel = view.findViewById(R.id.tvOverviewSubLabel);
         tvTotalIncome = view.findViewById(R.id.tvTotalIncome);
         tvNetBalance = view.findViewById(R.id.tvNetBalance);
+
+        tvCategorySectionTitle = view.findViewById(R.id.tvCategorySectionTitle);
         tvAdviceText = view.findViewById(R.id.tvAdviceText);
         tvEmptyState = view.findViewById(R.id.tvEmptyState);
 
@@ -153,9 +154,6 @@ public class StatisticFragment extends Fragment {
         rvCategorySpending = view.findViewById(R.id.rvCategorySpending);
     }
 
-    /**
-     * Tích hợp thanh Tìm kiếm Giao dịch Tức thời (SearchView)
-     */
     private void setupInstantSearchView() {
         if (svTransactionSearch == null) return;
 
@@ -174,9 +172,6 @@ public class StatisticFragment extends Fragment {
         });
     }
 
-    /**
-     * Lọc tức thời danh sách danh mục theo từ khóa tìm kiếm
-     */
     private void filterCategoryList(String query) {
         if (allCategoryItems == null) return;
 
@@ -195,14 +190,11 @@ public class StatisticFragment extends Fragment {
         } else {
             tvEmptyState.setVisibility(View.GONE);
             rvCategorySpending.setVisibility(View.VISIBLE);
-            categoryAdapter = new CategoryAdapter(filteredList);
+            categoryAdapter = new CategoryAdapter(filteredList, currentType == TYPE_EXPENSE);
             rvCategorySpending.setAdapter(categoryAdapter);
         }
     }
 
-    /**
-     * Tích hợp Nút kích hoạt Dialog Phân chia Ngân sách Tự động 50/30/20
-     */
     private void setupBudget503020Rule() {
         if (btn503020Rule == null) return;
 
@@ -212,44 +204,23 @@ public class StatisticFragment extends Fragment {
         });
     }
 
-    private void setupWalletSpinner() {
-        if (getContext() == null) return;
-        String[] wallets = new String[]{"💳 Tất cả ví", "💵 Ví tiền mặt", "💳 Thẻ tín dụng", "🏦 Ngân hàng"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, wallets);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spWalletFilter.setAdapter(adapter);
-
-        spWalletFilter.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                loadStatisticData();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
-    }
-
     private void setupTimeFilterTabs() {
         View.OnClickListener tabListener = v -> {
             int id = v.getId();
-            if (id == R.id.tabWeek) currentTab = TAB_WEEK;
-            else if (id == R.id.tabMonth) currentTab = TAB_MONTH;
-            else if (id == R.id.tabYear) currentTab = TAB_YEAR;
-            else if (id == R.id.tabCustom) currentTab = TAB_CUSTOM;
-
-            updateTabStyles();
+            if (id == R.id.tabMonth) {
+                currentTab = TAB_MONTH;
+            } else if (id == R.id.tabYear) {
+                currentTab = TAB_YEAR;
+            }
+            updateTimeTabStyles();
             updateDateRangeDisplay();
             loadStatisticData();
         };
 
-        tabWeek.setOnClickListener(tabListener);
         tabMonth.setOnClickListener(tabListener);
         tabYear.setOnClickListener(tabListener);
-        tabCustom.setOnClickListener(tabListener);
 
-        updateTabStyles();
+        updateTimeTabStyles();
         updateDateRangeDisplay();
 
         btnPrevDate.setOnClickListener(v -> {
@@ -263,20 +234,44 @@ public class StatisticFragment extends Fragment {
         });
     }
 
-    private void updateTabStyles() {
-        resetTab(tabWeek);
+    private void setupTypeFilterTabs() {
+        View.OnClickListener typeListener = v -> {
+            int id = v.getId();
+            if (id == R.id.tabExpense) {
+                currentType = TYPE_EXPENSE;
+            } else if (id == R.id.tabIncome) {
+                currentType = TYPE_INCOME;
+            }
+            updateTypeTabStyles();
+            loadStatisticData();
+        };
+
+        tabExpense.setOnClickListener(typeListener);
+        tabIncome.setOnClickListener(typeListener);
+
+        updateTypeTabStyles();
+    }
+
+    private void updateTimeTabStyles() {
         resetTab(tabMonth);
         resetTab(tabYear);
-        resetTab(tabCustom);
 
-        TextView activeTab;
-        if (currentTab == TAB_WEEK) activeTab = tabWeek;
-        else if (currentTab == TAB_YEAR) activeTab = tabYear;
-        else if (currentTab == TAB_CUSTOM) activeTab = tabCustom;
-        else activeTab = tabMonth;
-
+        TextView activeTab = (currentTab == TAB_YEAR) ? tabYear : tabMonth;
         activeTab.setTextColor(Color.WHITE);
         activeTab.setBackground(createTabDrawable(Color.parseColor("#0B5A4B")));
+    }
+
+    private void updateTypeTabStyles() {
+        resetTab(tabExpense);
+        resetTab(tabIncome);
+
+        if (currentType == TYPE_EXPENSE) {
+            tabExpense.setTextColor(Color.WHITE);
+            tabExpense.setBackground(createTabDrawable(Color.parseColor("#D32F2F")));
+        } else {
+            tabIncome.setTextColor(Color.WHITE);
+            tabIncome.setBackground(createTabDrawable(Color.parseColor("#0B8043")));
+        }
     }
 
     private void resetTab(TextView tab) {
@@ -284,10 +279,11 @@ public class StatisticFragment extends Fragment {
         tab.setBackground(null);
     }
 
-    private android.graphics.drawable.GradientDrawable createTabDrawable(int color) {
-        android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+    private GradientDrawable createTabDrawable(int color) {
+        float density = getResources().getDisplayMetrics().density;
+        GradientDrawable gd = new GradientDrawable();
         gd.setColor(color);
-        gd.setCornerRadius(18f);
+        gd.setCornerRadius(17f * density);
         return gd;
     }
 
@@ -301,68 +297,289 @@ public class StatisticFragment extends Fragment {
                 selectedMonth = 11;
                 selectedYear--;
             }
-        } else if (currentTab == TAB_YEAR) {
+        } else {
             selectedYear += delta;
-        } else if (currentTab == TAB_WEEK) {
-            selectedDay += delta * 7;
         }
         updateDateRangeDisplay();
     }
 
     private void updateDateRangeDisplay() {
         String displayStr;
-        if (currentTab == TAB_WEEK) {
-            displayStr = String.format(Locale.getDefault(), "Tuần này (%02d/%02d)", selectedDay, selectedMonth + 1);
-        } else if (currentTab == TAB_YEAR) {
-            displayStr = String.format(Locale.getDefault(), "01/01/%04d - 31/12/%04d", selectedYear, selectedYear);
+        if (currentTab == TAB_YEAR) {
+            displayStr = String.format(Locale.getDefault(), "Năm %04d", selectedYear);
         } else {
-            displayStr = String.format(Locale.getDefault(), "01/%02d/%04d - 31/%02d/%04d", selectedMonth + 1, selectedYear, selectedMonth + 1, selectedYear);
+            displayStr = String.format(Locale.getDefault(), "Tháng %02d/%04d", selectedMonth + 1, selectedYear);
         }
         tvDateRangeDisplay.setText(displayStr);
     }
 
-    private void setupDatePicker() {
+    /**
+     * Mở hộp thoại chọn chỉ Tháng & Năm (không hiện lịch ngày)
+     */
+    private void setupMonthYearPicker() {
         cardDateRangePicker.setOnClickListener(v -> {
             if (getContext() == null) return;
-            DatePickerDialog datePickerDialog = new DatePickerDialog(
-                    getContext(),
-                    (view, year, monthOfYear, dayOfMonth) -> {
-                        selectedYear = year;
-                        selectedMonth = monthOfYear;
-                        selectedDay = dayOfMonth;
+
+            float density = getResources().getDisplayMetrics().density;
+            int pad = Math.round(16 * density);
+
+            LinearLayout container = new LinearLayout(getContext());
+            container.setOrientation(LinearLayout.HORIZONTAL);
+            container.setGravity(Gravity.CENTER);
+            container.setPadding(pad, pad, pad, pad / 2);
+
+            // Picker Tháng
+            LinearLayout monthCol = new LinearLayout(getContext());
+            monthCol.setOrientation(LinearLayout.VERTICAL);
+            monthCol.setGravity(Gravity.CENTER_HORIZONTAL);
+            LinearLayout.LayoutParams colParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            monthCol.setLayoutParams(colParams);
+
+            TextView tvMonthLabel = new TextView(getContext());
+            tvMonthLabel.setText("Tháng");
+            tvMonthLabel.setTextSize(13f);
+            tvMonthLabel.setTypeface(null, Typeface.BOLD);
+            tvMonthLabel.setTextColor(Color.parseColor("#0B5A4B"));
+            monthCol.addView(tvMonthLabel);
+
+            NumberPicker npMonth = new NumberPicker(getContext());
+            npMonth.setMinValue(1);
+            npMonth.setMaxValue(12);
+            npMonth.setValue(selectedMonth + 1);
+            String[] monthLabels = new String[12];
+            for (int i = 0; i < 12; i++) {
+                monthLabels[i] = "T" + (i + 1);
+            }
+            npMonth.setDisplayedValues(monthLabels);
+            npMonth.setWrapSelectorWheel(true);
+            monthCol.addView(npMonth);
+
+            // Picker Năm
+            LinearLayout yearCol = new LinearLayout(getContext());
+            yearCol.setOrientation(LinearLayout.VERTICAL);
+            yearCol.setGravity(Gravity.CENTER_HORIZONTAL);
+            yearCol.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+            TextView tvYearLabel = new TextView(getContext());
+            tvYearLabel.setText("Năm");
+            tvYearLabel.setTextSize(13f);
+            tvYearLabel.setTypeface(null, Typeface.BOLD);
+            tvYearLabel.setTextColor(Color.parseColor("#0B5A4B"));
+            yearCol.addView(tvYearLabel);
+
+            NumberPicker npYear = new NumberPicker(getContext());
+            int minYear = Math.min(2020, selectedYear - 5);
+            int maxYear = Math.max(2035, selectedYear + 5);
+            npYear.setMinValue(minYear);
+            npYear.setMaxValue(maxYear);
+            npYear.setValue(selectedYear);
+            npYear.setWrapSelectorWheel(false);
+            yearCol.addView(npYear);
+
+            if (currentTab == TAB_MONTH) {
+                container.addView(monthCol);
+            }
+            container.addView(yearCol);
+
+            String title = (currentTab == TAB_YEAR) ? "Chọn năm" : "Chọn tháng và năm";
+
+            new AlertDialog.Builder(getContext())
+                    .setTitle(title)
+                    .setView(container)
+                    .setPositiveButton("Chọn", (dialog, which) -> {
+                        if (currentTab == TAB_MONTH) {
+                            selectedMonth = npMonth.getValue() - 1;
+                        }
+                        selectedYear = npYear.getValue();
                         updateDateRangeDisplay();
                         loadStatisticData();
-                    },
-                    selectedYear, selectedMonth, selectedDay
-            );
-            datePickerDialog.show();
+                    })
+                    .setNegativeButton("Hủy", null)
+                    .show();
         });
     }
 
     private void loadStatisticData() {
         if (budgetDAO == null) return;
 
-        String monthYearStr = String.format(Locale.getDefault(), "%04d-%02d", selectedYear, selectedMonth + 1);
-        double totalIncome = budgetDAO.getTotalIncomeByMonth(currentUserId, monthYearStr);
-        double totalExpense = budgetDAO.getTotalExpenseByMonth(currentUserId, monthYearStr);
+        String datePrefix = getCurrentDatePrefix();
+        String prevPrefix = getPreviousDatePrefix();
 
-        // Dữ liệu mẫu khớp 100% hình ảnh tham chiếu
-        if (totalExpense == 0) {
-            totalExpense = 24850000;
-            totalIncome = 38500000;
-        }
-
+        double totalExpense = budgetDAO.getTotalAmountByDatePrefix(currentUserId, Category.TYPE_EXPENSE, datePrefix);
+        double totalIncome = budgetDAO.getTotalAmountByDatePrefix(currentUserId, Category.TYPE_INCOME, datePrefix);
         double netBalance = totalIncome - totalExpense;
 
-        tvTotalExpenseMain.setText("-" + formatAmountDot(totalExpense));
-        tvTotalIncome.setText("+" + formatAmountDot(totalIncome));
-        tvNetBalance.setText("+" + formatAmountDot(netBalance));
+        boolean isExpenseMode = (currentType == TYPE_EXPENSE);
+        double mainAmount = isExpenseMode ? totalExpense : totalIncome;
+        double prevAmount = budgetDAO.getTotalAmountByDatePrefix(
+                currentUserId,
+                isExpenseMode ? Category.TYPE_EXPENSE : Category.TYPE_INCOME,
+                prevPrefix
+        );
 
-        // Dữ liệu danh mục chuẩn giao diện mẫu
-        allCategoryItems = getMockOrDbCategoryData();
+        // Cập nhật cardOverview gọn, hợp lý theo chế độ Chi tiêu / Thu nhập
+        if (isExpenseMode) {
+            tvOverviewTitle.setText("Tổng chi tiêu");
+            tvTotalExpenseMain.setText(totalExpense > 0 ? "-" + formatAmountDot(totalExpense) : "0 đ");
+            tvTotalExpenseMain.setTextColor(Color.parseColor("#D32F2F"));
 
-        categoryAdapter = new CategoryAdapter(allCategoryItems);
-        rvCategorySpending.setAdapter(categoryAdapter);
+            tvOverviewSubLabel.setText("● Tổng thu");
+            tvOverviewSubLabel.setTextColor(Color.parseColor("#0B8043"));
+            tvTotalIncome.setText(totalIncome > 0 ? "+" + formatAmountDot(totalIncome) : "0 đ");
+            tvTotalIncome.setTextColor(Color.parseColor("#0B8043"));
+
+            tvCategorySectionTitle.setText("Chi tiết chi tiêu");
+            tvEmptyState.setText("Chưa có dữ liệu chi tiêu trong khoảng thời gian này.");
+        } else {
+            tvOverviewTitle.setText("Tổng thu nhập");
+            tvTotalExpenseMain.setText(totalIncome > 0 ? "+" + formatAmountDot(totalIncome) : "0 đ");
+            tvTotalExpenseMain.setTextColor(Color.parseColor("#0B8043"));
+
+            tvOverviewSubLabel.setText("● Tổng chi");
+            tvOverviewSubLabel.setTextColor(Color.parseColor("#D32F2F"));
+            tvTotalIncome.setText(totalExpense > 0 ? "-" + formatAmountDot(totalExpense) : "0 đ");
+            tvTotalIncome.setTextColor(Color.parseColor("#D32F2F"));
+
+            tvCategorySectionTitle.setText("Chi tiết thu nhập");
+            tvEmptyState.setText("Chưa có dữ liệu thu nhập trong khoảng thời gian này.");
+        }
+
+        if (netBalance > 0) {
+            tvNetBalance.setText("+" + formatAmountDot(netBalance));
+            tvNetBalance.setTextColor(Color.parseColor("#1A73E8"));
+        } else if (netBalance < 0) {
+            tvNetBalance.setText("-" + formatAmountDot(Math.abs(netBalance)));
+            tvNetBalance.setTextColor(Color.parseColor("#D32F2F"));
+        } else {
+            tvNetBalance.setText("0 đ");
+            tvNetBalance.setTextColor(Color.parseColor("#1A73E8"));
+        }
+
+        updateComparisonBadge(mainAmount, prevAmount, isExpenseMode);
+
+        // Truy vấn danh sách chi tiết danh mục theo loại đang chọn (EXPENSE / INCOME)
+        String queryType = isExpenseMode ? Category.TYPE_EXPENSE : Category.TYPE_INCOME;
+        List<BudgetDAO.CategorySummary> summaries = budgetDAO.getCategorySummaryByDatePrefix(currentUserId, queryType, datePrefix);
+
+        allCategoryItems = new ArrayList<>();
+        for (BudgetDAO.CategorySummary summary : summaries) {
+            int percentage = mainAmount > 0 ? (int) Math.round((summary.totalAmount * 100.0) / mainAmount) : 0;
+            int color = parseColorSafe(summary.colorCode, isExpenseMode ? "#D32F2F" : "#0B8043");
+            int iconBg = adjustAlpha(color, 0.16f);
+            String emoji = mapIconEmoji(summary.iconName);
+
+            allCategoryItems.add(new CategoryDetailItem(
+                    summary.name,
+                    summary.totalAmount,
+                    percentage,
+                    summary.transactionCount + " giao dịch",
+                    emoji,
+                    color,
+                    iconBg
+            ));
+        }
+
+        updateAdviceCard(isExpenseMode, mainAmount, totalIncome, totalExpense);
+
+        String currentQuery = svTransactionSearch != null ? svTransactionSearch.getQuery().toString() : "";
+        filterCategoryList(currentQuery);
+    }
+
+    private void updateComparisonBadge(double currentAmount, double prevAmount, boolean isExpenseMode) {
+        if (prevAmount <= 0) {
+            tvComparisonBadge.setVisibility(View.GONE);
+            return;
+        }
+
+        long diffPct = Math.round(((currentAmount - prevAmount) / prevAmount) * 100.0);
+        tvComparisonBadge.setVisibility(View.VISIBLE);
+
+        String arrow = diffPct >= 0 ? "↑ +" : "↓ ";
+        tvComparisonBadge.setText(arrow + diffPct + "% vs kỳ trước");
+
+        boolean isGood = isExpenseMode ? (diffPct <= 0) : (diffPct >= 0);
+        if (isGood) {
+            tvComparisonBadge.setTextColor(Color.parseColor("#0B8043"));
+            tvComparisonBadge.setBackgroundColor(Color.parseColor("#E8F5E9"));
+        } else {
+            tvComparisonBadge.setTextColor(Color.parseColor("#D32F2F"));
+            tvComparisonBadge.setBackgroundColor(Color.parseColor("#FDE8E8"));
+        }
+    }
+
+    private void updateAdviceCard(boolean isExpenseMode, double mainAmount, double totalIncome, double totalExpense) {
+        if (allCategoryItems.isEmpty() || mainAmount <= 0) {
+            tvAdviceText.setText("Thêm giao dịch trong kỳ này để xem phân tích chi tiết theo từng danh mục.");
+            return;
+        }
+
+        CategoryDetailItem top = allCategoryItems.get(0);
+        if (isExpenseMode) {
+            tvAdviceText.setText(String.format(Locale.getDefault(),
+                    "Danh mục %s đang chiếm %d%% tổng chi tiêu (%s). Hãy theo dõi sát để cân đối ngân sách!",
+                    top.name, top.percentage, formatAmountDot(top.amount)));
+        } else {
+            double saved = totalIncome - totalExpense;
+            tvAdviceText.setText(String.format(Locale.getDefault(),
+                    "Nguồn thu lớn nhất là %s (%d%%). Số dư ròng hiện tại: %s.",
+                    top.name, top.percentage,
+                    (saved >= 0 ? "+" : "-") + formatAmountDot(Math.abs(saved))));
+        }
+    }
+
+    private String getCurrentDatePrefix() {
+        if (currentTab == TAB_YEAR) {
+            return String.format(Locale.getDefault(), "%04d", selectedYear);
+        }
+        return String.format(Locale.getDefault(), "%04d-%02d", selectedYear, selectedMonth + 1);
+    }
+
+    private String getPreviousDatePrefix() {
+        if (currentTab == TAB_YEAR) {
+            return String.format(Locale.getDefault(), "%04d", selectedYear - 1);
+        }
+        int prevMonth = selectedMonth - 1;
+        int prevYear = selectedYear;
+        if (prevMonth < 0) {
+            prevMonth = 11;
+            prevYear--;
+        }
+        return String.format(Locale.getDefault(), "%04d-%02d", prevYear, prevMonth + 1);
+    }
+
+    private int parseColorSafe(String colorCode, String fallbackHex) {
+        if (colorCode != null && !colorCode.trim().isEmpty()) {
+            try {
+                return Color.parseColor(colorCode.trim());
+            } catch (Exception ignored) {
+            }
+        }
+        return Color.parseColor(fallbackHex);
+    }
+
+    private int adjustAlpha(int color, float factor) {
+        int alpha = Math.round(255 * factor);
+        return Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color));
+    }
+
+    private String mapIconEmoji(String iconName) {
+        if (iconName == null) return "📌";
+        switch (iconName.toLowerCase(Locale.getDefault())) {
+            case "ic_food":
+                return "🍴";
+            case "ic_school":
+                return "📚";
+            case "ic_shopping":
+                return "🛍️";
+            case "ic_transport":
+                return "🚗";
+            case "ic_award":
+                return "🎓";
+            case "ic_work":
+                return "💼";
+            default:
+                return "📌";
+        }
     }
 
     private static String formatAmountDot(double amount) {
@@ -372,32 +589,21 @@ public class StatisticFragment extends Fragment {
         return formatter.format(amount) + " đ";
     }
 
-    private List<CategoryDetailItem> getMockOrDbCategoryData() {
-        List<CategoryDetailItem> list = new ArrayList<>();
-
-        list.add(new CategoryDetailItem("Ăn uống & Nhà hàng", 9443000, 38, "42 giao dịch", "🍴", Color.parseColor("#0B5A4B"), Color.parseColor("#A7F3D0")));
-        list.add(new CategoryDetailItem("Hóa đơn & Tiện ích", 6461000, 26, "8 giao dịch", "⚡", Color.parseColor("#FF6D00"), Color.parseColor("#FEF3C7")));
-        list.add(new CategoryDetailItem("Mua sắm & Tiêu dùng", 4473000, 18, "15 giao dịch", "🛍️", Color.parseColor("#7C4DFF"), Color.parseColor("#F3E8FF")));
-        list.add(new CategoryDetailItem("Di chuyển & Đi lại", 2982000, 12, "24 giao dịch", "🚗", Color.parseColor("#1E88E5"), Color.parseColor("#E0F2FE")));
-        list.add(new CategoryDetailItem("Giải trí & Khác", 1491000, 6, "9 giao dịch", "🎮", Color.parseColor("#FBC02D"), Color.parseColor("#FEF9C3")));
-
-        return list;
-    }
-
     // =========================================================================
-    // MODEL & ADAPTER HIỂN THỊ DANH MỤC CHI TIẾT CHUẨN GIAO DIỆN MẪU
+    // MODEL & ADAPTER HIỂN THỊ DANH MỤC CHI TIẾT
     // =========================================================================
 
     private static class CategoryDetailItem {
-        String name;
-        double amount;
-        int percentage;
-        String transactionCount;
-        String iconEmoji;
-        int color;
-        int iconBgColor;
+        final String name;
+        final double amount;
+        final int percentage;
+        final String transactionCount;
+        final String iconEmoji;
+        final int color;
+        final int iconBgColor;
 
-        CategoryDetailItem(String name, double amount, int percentage, String transactionCount, String iconEmoji, int color, int iconBgColor) {
+        CategoryDetailItem(String name, double amount, int percentage, String transactionCount,
+                           String iconEmoji, int color, int iconBgColor) {
             this.name = name;
             this.amount = amount;
             this.percentage = percentage;
@@ -410,9 +616,11 @@ public class StatisticFragment extends Fragment {
 
     private static class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHolder> {
         private final List<CategoryDetailItem> list;
+        private final boolean isExpense;
 
-        public CategoryAdapter(List<CategoryDetailItem> list) {
+        public CategoryAdapter(List<CategoryDetailItem> list, boolean isExpense) {
             this.list = list;
+            this.isExpense = isExpense;
         }
 
         @NonNull
@@ -432,7 +640,6 @@ public class StatisticFragment extends Fragment {
             root.setPadding(24, 20, 24, 20);
             card.addView(root);
 
-            // Hàng top: Icon + Title/Subtitle + Amount/%
             LinearLayout topRow = new LinearLayout(parent.getContext());
             topRow.setOrientation(LinearLayout.HORIZONTAL);
             topRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -466,7 +673,6 @@ public class StatisticFragment extends Fragment {
 
             TextView tvAmount = new TextView(parent.getContext());
             tvAmount.setTextSize(14f);
-            tvAmount.setTextColor(Color.parseColor("#1A1A1A"));
             tvAmount.setTypeface(null, Typeface.BOLD);
 
             TextView tvPercent = new TextView(parent.getContext());
@@ -482,7 +688,6 @@ public class StatisticFragment extends Fragment {
 
             root.addView(topRow);
 
-            // ProgressBar
             ProgressBar pb = new ProgressBar(parent.getContext(), null, android.R.attr.progressBarStyleHorizontal);
             LinearLayout.LayoutParams pbParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 12);
             pbParams.setMargins(0, 12, 0, 0);
@@ -499,14 +704,18 @@ public class StatisticFragment extends Fragment {
             CategoryDetailItem item = list.get(position);
 
             holder.tvIcon.setText(item.iconEmoji);
-            android.graphics.drawable.GradientDrawable iconBg = new android.graphics.drawable.GradientDrawable();
-            iconBg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            GradientDrawable iconBg = new GradientDrawable();
+            iconBg.setShape(GradientDrawable.OVAL);
             iconBg.setColor(item.iconBgColor);
             holder.tvIcon.setBackground(iconBg);
 
             holder.tvTitle.setText(item.name);
             holder.tvSub.setText(item.transactionCount);
-            holder.tvAmount.setText("-" + formatAmountDot(item.amount));
+
+            String prefix = isExpense ? "-" : "+";
+            holder.tvAmount.setText(prefix + formatAmountDot(item.amount));
+            holder.tvAmount.setTextColor(Color.parseColor(isExpense ? "#D32F2F" : "#0B8043"));
+
             holder.tvPercent.setText(item.percentage + "%");
             holder.tvPercent.setTextColor(item.color);
 

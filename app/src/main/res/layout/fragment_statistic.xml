@@ -94,7 +94,7 @@
             </LinearLayout>
         </RelativeLayout>
 
-        <!-- 2. Time Filter Segment Bar (Tuần, Tháng, Năm, Tùy chỉnh) -->
+        <!-- 2. Time Filter Segment Bar (Tháng / Năm) -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -111,24 +111,13 @@
                 android:padding="3dp">
 
                 <TextView
-                    android:id="@+id/tabWeek"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Tuần"
-                    android:textColor="#666666"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <TextView
                     android:id="@+id/tabMonth"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="Tháng"
-                    android:textColor="#FFFFFF"
+                    android:textColor="#666666"
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
@@ -143,31 +132,14 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tabCustom"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Tùy chỉnh"
-                    android:textColor="#666666"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="32dp"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:text="🎚️"
-                    android:textSize="12sp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Date Navigator (< 01/10/2024 - 31/10/2024 >) -->
+        <!-- Date Navigator (< Tháng 11/2026 >) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -210,7 +182,7 @@
                         android:id="@+id/tvDateRangeDisplay"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="01/10/2024 - 31/10/2024"
+                        android:text="Tháng 11/2026"
                         android:textColor="#0B5A4B"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -218,9 +190,9 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text=" ❯"
+                        android:text=" ▾"
                         android:textColor="#0B5A4B"
-                        android:textSize="11sp" />
+                        android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -235,137 +207,52 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- 3. Transaction Filter Pills (Chi tiêu, Thu nhập, Tất cả) -->
-        <LinearLayout
+        <!-- 3. Transaction Type Switch (Chi tiêu / Thu nhập) -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/pillExpense"
-                android:layout_width="wrap_content"
-                android:layout_height="34dp"
-                android:background="#FFFFFF"
-                android:gravity="center"
-                android:paddingStart="18dp"
-                android:paddingEnd="18dp"
-                android:text="📉 Chi tiêu"
-                android:textColor="#0B5A4B"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <Space
-                android:layout_width="8dp"
-                android:layout_height="wrap_content" />
-
-            <TextView
-                android:id="@+id/pillIncome"
-                android:layout_width="wrap_content"
-                android:layout_height="34dp"
-                android:background="#EBF3FE"
-                android:gravity="center"
-                android:paddingStart="18dp"
-                android:paddingEnd="18dp"
-                android:text="📈 Thu nhập"
-                android:textColor="#555555"
-                android:textSize="13sp" />
-
-            <Space
-                android:layout_width="8dp"
-                android:layout_height="wrap_content" />
-
-            <TextView
-                android:id="@+id/pillAll"
-                android:layout_width="wrap_content"
-                android:layout_height="34dp"
-                android:background="#EBF3FE"
-                android:gravity="center"
-                android:paddingStart="18dp"
-                android:paddingEnd="18dp"
-                android:text="🔄 Tất cả"
-                android:textColor="#555555"
-                android:textSize="13sp" />
-        </LinearLayout>
-
-        <!-- Sub Wallet Pills Row -->
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:scrollbars="none">
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="1dp">
 
             <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_width="match_parent"
+                android:layout_height="38dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="3dp">
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="28dp"
-                    android:background="#0B5A4B"
+                    android:id="@+id/tabExpense"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
                     android:gravity="center"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:text="✓ Tất cả ví"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp"
+                    android:text="Chi tiêu"
+                    android:textColor="#666666"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
-                <Space
-                    android:layout_width="8dp"
-                    android:layout_height="wrap_content" />
-
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="28dp"
-                    android:background="#FFFFFF"
+                    android:id="@+id/tabIncome"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
                     android:gravity="center"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:text="💵 Ví tiền mặt"
-                    android:textColor="#555555"
-                    android:textSize="11sp" />
-
-                <Space
-                    android:layout_width="8dp"
-                    android:layout_height="wrap_content" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="28dp"
-                    android:background="#FFFFFF"
-                    android:gravity="center"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:text="💳 Thẻ tín dụng"
-                    android:textColor="#555555"
-                    android:textSize="11sp" />
-
-                <Space
-                    android:layout_width="8dp"
-                    android:layout_height="wrap_content" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="28dp"
-                    android:background="#FFFFFF"
-                    android:gravity="center"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:text="🏦 Ngân hàng"
-                    android:textColor="#555555"
-                    android:textSize="11sp" />
+                    android:text="Thu nhập"
+                    android:textColor="#666666"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
             </LinearLayout>
-        </HorizontalScrollView>
+        </androidx.cardview.widget.CardView>
 
-        <!-- 4. Overview Card (Tổng chi tiêu chu kỳ) -->
+        <!-- 4. Overview Card (Gọn, hợp lý theo tab Chi tiêu / Thu nhập) -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardOverview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             app:cardBackgroundColor="#FFFFFF"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp">
@@ -374,16 +261,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="16dp">
 
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
                     <TextView
+                        android:id="@+id/tvOverviewTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Tổng chi tiêu chu kỳ ⓘ"
+                        android:layout_centerVertical="true"
+                        android:text="Tổng chi tiêu"
                         android:textColor="#757575"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -393,96 +282,89 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
                         android:background="#FDE8E8"
                         android:paddingStart="8dp"
                         android:paddingTop="3dp"
                         android:paddingEnd="8dp"
                         android:paddingBottom="3dp"
-                        android:text="↑ +12% vs T9"
                         android:textColor="#D32F2F"
                         android:textSize="11sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:visibility="gone" />
                 </RelativeLayout>
 
                 <TextView
                     android:id="@+id/tvTotalExpenseMain"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="-24.850.000 đ"
-                    android:textColor="#1A1A1A"
-                    android:textSize="28sp"
+                    android:layout_marginTop="6dp"
+                    android:text="0 đ"
+                    android:textColor="#D32F2F"
+                    android:textSize="26sp"
                     android:textStyle="bold" />
 
-                <!-- Inner Financial Summary Container -->
-                <androidx.cardview.widget.CardView
+                <!-- Inner Financial Summary Strip -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    app:cardBackgroundColor="#F4F7FB"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="0dp">
+                    android:layout_marginTop="12dp"
+                    android:background="#F4F7FB"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
 
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:baselineAligned="false"
-                        android:orientation="horizontal"
-                        android:padding="14dp">
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                        <!-- Total Income Sub -->
-                        <LinearLayout
-                            android:layout_width="0dp"
+                        <TextView
+                            android:id="@+id/tvOverviewSubLabel"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:text="● Tổng thu"
+                            android:textColor="#0B8043"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="● Tổng thu"
-                                android:textColor="#0B8043"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/tvTotalIncome"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="+38.500.000 đ"
-                                android:textColor="#0B8043"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <!-- Net Balance Sub -->
-                        <LinearLayout
-                            android:layout_width="0dp"
+                        <TextView
+                            android:id="@+id/tvTotalIncome"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="● Số dư ròng"
-                                android:textColor="#1A73E8"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/tvNetBalance"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="+13.650.000 đ"
-                                android:textColor="#1A73E8"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
+                            android:layout_marginTop="3dp"
+                            android:text="0 đ"
+                            android:textColor="#0B8043"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
-                </androidx.cardview.widget.CardView>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="● Số dư ròng"
+                            android:textColor="#1A73E8"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvNetBalance"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:text="0 đ"
+                            android:textColor="#1A73E8"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -491,13 +373,14 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="20dp"
             android:layout_marginBottom="8dp">
 
             <TextView
+                android:id="@+id/tvCategorySectionTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Chi tiết danh mục"
+                android:text="Chi tiết chi tiêu"
                 android:textColor="#1A1A1A"
                 android:textSize="16sp"
                 android:textStyle="bold" />
