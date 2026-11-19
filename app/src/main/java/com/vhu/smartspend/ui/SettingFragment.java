@@ -1,17 +1,44 @@
 package com.vhu.smartspend.ui;
 
+import android.content.ContentValues;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 
 import com.vhu.smartspend.R;
+import com.vhu.smartspend.database.DatabaseHelper;
+import com.vhu.smartspend.utils.CsvExporter;
+import com.vhu.smartspend.utils.SessionManager;
+
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 
 public class SettingFragment extends Fragment {
+
+    private TextView tvUserFullName, tvUsername, tvUserRole, tvRoleBadge, tvMonthlyLimit;
+    private SwitchCompat swDarkMode, swAuto503020;
+    private View btnManageCategory, btnExportCsv, btnLogout;
+    private View rowMonthlyLimit, btnHeaderNotification;
+
+    private SessionManager sessionManager;
+    private DatabaseHelper dbHelper;
+    private double currentMonthlyLimit = 4500000;
 
     public SettingFragment() {
         // Required empty public constructor
@@ -21,6 +48,147 @@ public class SettingFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_setting, container, false);
+        View view = inflater.inflate(R.layout.fragment_setting, container, false);
+
+        sessionManager = new SessionManager(requireContext());
+        dbHelper = new DatabaseHelper(requireContext());
+
+        tvUserFullName = view.findViewById(R.id.tvUserFullName);
+        tvUsername = view.findViewById(R.id.tvUsername);
+        tvUserRole = view.findViewById(R.id.tvUserRole);
+        tvRoleBadge = view.findViewById(R.id.tvRoleBadge);
+        tvMonthlyLimit = view.findViewById(R.id.tvMonthlyLimit);
+
+        swDarkMode = view.findViewById(R.id.swDarkMode);
+        swAuto503020 = view.findViewById(R.id.swAuto503020);
+
+        rowMonthlyLimit = view.findViewById(R.id.rowMonthlyLimit);
+        btnManageCategory = view.findViewById(R.id.btnManageCategory);
+        btnExportCsv = view.findViewById(R.id.btnExportCsv);
+        btnHeaderNotification = view.findViewById(R.id.btnHeaderNotification);
+        btnLogout = view.findViewById(R.id.btnLogout);
+
+        bindUserInfo();
+        loadMonthlyLimit();
+
+        // Dark Mode switch
+        swDarkMode.setChecked(sessionManager.isDarkMode());
+        swDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked != sessionManager.isDarkMode()) {
+                sessionManager.setDarkMode(isChecked);
+                AppCompatDelegate.setDefaultNightMode(
+                        isChecked ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
+                );
+            }
+        });
+
+        swAuto503020.setOnCheckedChangeListener((buttonView, isChecked) ->
+                Toast.makeText(requireContext(),
+                        isChecked ? "Đã bật gợi ý phân bổ 50/30/20" : "Đã tắt gợi ý phân bổ 50/30/20",
+                        Toast.LENGTH_SHORT).show()
+        );
+
+        rowMonthlyLimit.setOnClickListener(v -> showEditMonthlyLimitDialog());
+
+        btnManageCategory.setOnClickListener(v -> {
+            Intent intent = new Intent(requireActivity(), CategoryManageActivity.class);
+            startActivity(intent);
+        });
+
+        btnExportCsv.setOnClickListener(v ->
+                CsvExporter.exportTransactionsToCsv(requireContext(), sessionManager.getUserId())
+        );
+
+        btnHeaderNotification.setOnClickListener(v ->
+                Toast.makeText(requireContext(), "Không có thông báo mới", Toast.LENGTH_SHORT).show()
+        );
+
+        btnLogout.setOnClickListener(v -> {
+            sessionManager.logout();
+            Intent intent = new Intent(requireActivity(), LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            requireActivity().finish();
+        });
+
+        return view;
+    }
+
+    private void bindUserInfo() {
+        String fullName = sessionManager.getFullName();
+        String username = sessionManager.getUsername();
+        String role = sessionManager.getRole();
+
+        tvUserFullName.setText(!fullName.isEmpty() ? fullName : "Người dùng");
+        tvUsername.setText(!username.isEmpty() ? "@" + username : "@smartspend");
+        tvUserRole.setText("Quyền hạn: " + role);
+        tvRoleBadge.setText("✦ TÀI KHOẢN " + role.toUpperCase(Locale.getDefault()));
+    }
+
+    private void loadMonthlyLimit() {
+        int userId = sessionManager.getUserId();
+        if (userId <= 0) {
+            tvMonthlyLimit.setText(formatVnd(currentMonthlyLimit));
+            return;
+        }
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase();
+             Cursor cursor = db.rawQuery("SELECT monthly_budget_limit FROM users WHERE user_id = ?",
+                     new String[]{String.valueOf(userId)})) {
+            if (cursor.moveToFirst()) {
+                currentMonthlyLimit = cursor.getDouble(0);
+            }
+        } catch (Exception ignored) {
+        }
+        tvMonthlyLimit.setText(formatVnd(currentMonthlyLimit));
+    }
+
+    private void showEditMonthlyLimitDialog() {
+        EditText input = new EditText(requireContext());
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setText(String.valueOf((long) currentMonthlyLimit));
+        input.setSelection(input.getText().length());
+
+        int pad = Math.round(20 * getResources().getDisplayMetrics().density);
+        android.widget.FrameLayout container = new android.widget.FrameLayout(requireContext());
+        container.setPadding(pad, pad / 2, pad, 0);
+        container.addView(input);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Hạn mức chi tiêu tháng")
+                .setMessage("Nhập số tiền hạn mức (VNĐ):")
+                .setView(container)
+                .setPositiveButton("Lưu", (dialog, which) -> {
+                    String raw = input.getText().toString().trim();
+                    if (raw.isEmpty()) return;
+                    try {
+                        double newLimit = Double.parseDouble(raw);
+                        if (newLimit <= 0) {
+                            Toast.makeText(requireContext(), "Hạn mức phải lớn hơn 0", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        int userId = sessionManager.getUserId();
+                        if (userId > 0) {
+                            try (SQLiteDatabase db = dbHelper.getWritableDatabase()) {
+                                ContentValues cv = new ContentValues();
+                                cv.put("monthly_budget_limit", newLimit);
+                                db.update("users", cv, "user_id = ?", new String[]{String.valueOf(userId)});
+                            }
+                        }
+                        currentMonthlyLimit = newLimit;
+                        tvMonthlyLimit.setText(formatVnd(currentMonthlyLimit));
+                        Toast.makeText(requireContext(), "Đã cập nhật hạn mức tháng!", Toast.LENGTH_SHORT).show();
+                    } catch (NumberFormatException e) {
+                        Toast.makeText(requireContext(), "Số tiền không hợp lệ", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    private String formatVnd(double amount) {
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.getDefault());
+        symbols.setGroupingSeparator('.');
+        DecimalFormat formatter = new DecimalFormat("#,###", symbols);
+        return formatter.format(amount) + " đ";
     }
 }
