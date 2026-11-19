@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (itemId == R.id.nav_home) {
                 selectedFragment = new HomeFragment();
-            } else if (itemId == R.id.nav_statistic || itemId == R.id.nav_budget) {
+            } else if (itemId == R.id.nav_statistic) {
                 selectedFragment = new StatisticFragment();
             } else if (itemId == R.id.nav_account) {
                 selectedFragment = new SettingFragment();

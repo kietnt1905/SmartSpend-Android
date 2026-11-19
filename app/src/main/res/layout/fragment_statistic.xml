@@ -480,119 +480,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- 5. Tỷ Trọng Chi Tiêu Card (Donut Chart + Legend) -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardBackgroundColor="#FFFFFF"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🌐 Tỷ trọng chi tiêu"
-                        android:textColor="#1A1A1A"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvCategoryCount"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:text="5 danh mục"
-                        android:textColor="#757575"
-                        android:textSize="12sp" />
-                </RelativeLayout>
-
-                <!-- Chart Container (Donut Chart + Category Legend) -->
-                <LinearLayout
-                    android:id="@+id/layoutChartContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <!-- Donut Chart Canvas Container -->
-                    <FrameLayout
-                        android:id="@+id/containerDonutChart"
-                        android:layout_width="160dp"
-                        android:layout_height="160dp" />
-
-                    <!-- Legend Column -->
-                    <LinearLayout
-                        android:id="@+id/layoutLegendContainer"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:gravity="center_vertical"
-                        android:orientation="vertical" />
-                </LinearLayout>
-
-                <!-- Weekly Trend Sub Card inside Donut Card -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    app:cardBackgroundColor="#F4F7FB"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="0dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <RelativeLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content">
-
-                            <TextView
-                                android:id="@+id/tvBarChartTitle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Diễn biến theo tuần (Tháng 10)"
-                                android:textColor="#1A1A1A"
-                                android:textSize="13sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/tvWeeklyAverage"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentEnd="true"
-                                android:text="TB: 6.2M / tuần"
-                                android:textColor="#757575"
-                                android:textSize="11sp" />
-                        </RelativeLayout>
-
-                        <!-- Container for Bar Chart -->
-                        <FrameLayout
-                            android:id="@+id/containerBarChart"
-                            android:layout_width="match_parent"
-                            android:layout_height="130dp"
-                            android:layout_marginTop="12dp" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- 6. Category Detail Header & Search/Rule Bar -->
+        <!-- 5. Category Detail Header & Search/Rule Bar -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -667,7 +555,7 @@
             android:textSize="14sp"
             android:visibility="gone" />
 
-        <!-- 7. Category Detail RecyclerView -->
+        <!-- 6. Category Detail RecyclerView -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvCategorySpending"
             android:layout_width="match_parent"
@@ -675,7 +563,7 @@
             android:nestedScrollingEnabled="false"
             tools:listitem="@android:layout/simple_list_item_2" />
 
-        <!-- 8. AI Recommendation / Smart Advice Card -->
+        <!-- 7. AI Recommendation / Smart Advice Card -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardAiAdvice"
             android:layout_width="match_parent"

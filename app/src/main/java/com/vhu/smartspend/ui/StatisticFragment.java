@@ -1,14 +1,13 @@
 package com.vhu.smartspend.ui;
 
 import android.app.DatePickerDialog;
-import android.content.Context;
-import android.graphics.Canvas;
+
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.RectF;
+
 import android.graphics.Typeface;
 import android.graphics.drawable.ClipDrawable;
 import android.graphics.drawable.ColorDrawable;
+
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -17,7 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.FrameLayout;
+
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
@@ -68,17 +67,11 @@ public class StatisticFragment extends Fragment {
     private TextView pillExpense, pillIncome, pillAll;
     private TextView tvTotalExpenseMain, tvComparisonBadge;
     private TextView tvTotalIncome, tvNetBalance;
-    private TextView tvCategoryCount, tvAdviceText;
+    private TextView tvAdviceText;
     private TextView tvEmptyState;
     private SearchView svTransactionSearch;
     private TextView btn503020Rule;
     private RecyclerView rvCategorySpending;
-    private FrameLayout containerDonutChart, containerBarChart;
-    private LinearLayout layoutLegendContainer;
-
-    // Custom Canvas Views
-    private DonutChartView donutChartView;
-    private BarChartView barChartView;
 
     // Category List Data
     private List<CategoryDetailItem> allCategoryItems = new ArrayList<>();
@@ -120,7 +113,6 @@ public class StatisticFragment extends Fragment {
         setupWalletSpinner();
         setupTimeFilterTabs();
         setupDatePicker();
-        setupCharts();
         setupInstantSearchView();
         setupBudget503020Rule();
 
@@ -155,17 +147,12 @@ public class StatisticFragment extends Fragment {
         tvComparisonBadge = view.findViewById(R.id.tvComparisonBadge);
         tvTotalIncome = view.findViewById(R.id.tvTotalIncome);
         tvNetBalance = view.findViewById(R.id.tvNetBalance);
-        tvCategoryCount = view.findViewById(R.id.tvCategoryCount);
         tvAdviceText = view.findViewById(R.id.tvAdviceText);
         tvEmptyState = view.findViewById(R.id.tvEmptyState);
 
         svTransactionSearch = view.findViewById(R.id.svTransactionSearch);
         btn503020Rule = view.findViewById(R.id.btn503020Rule);
         rvCategorySpending = view.findViewById(R.id.rvCategorySpending);
-
-        containerDonutChart = view.findViewById(R.id.containerDonutChart);
-        containerBarChart = view.findViewById(R.id.containerBarChart);
-        layoutLegendContainer = view.findViewById(R.id.layoutLegendContainer);
     }
 
     /**
@@ -354,18 +341,6 @@ public class StatisticFragment extends Fragment {
         });
     }
 
-    private void setupCharts() {
-        if (getContext() == null) return;
-
-        donutChartView = new DonutChartView(getContext());
-        containerDonutChart.removeAllViews();
-        containerDonutChart.addView(donutChartView);
-
-        barChartView = new BarChartView(getContext());
-        containerBarChart.removeAllViews();
-        containerBarChart.addView(barChartView);
-    }
-
     private void loadStatisticData() {
         if (budgetDAO == null) return;
 
@@ -387,47 +362,6 @@ public class StatisticFragment extends Fragment {
 
         // Dữ liệu danh mục chuẩn giao diện mẫu
         allCategoryItems = getMockOrDbCategoryData();
-        tvCategoryCount.setText(allCategoryItems.size() + " danh mục");
-
-        // Cập nhật Donut Chart & Legend
-        List<Float> percentages = new ArrayList<>();
-        List<Integer> colors = new ArrayList<>();
-        layoutLegendContainer.removeAllViews();
-
-        for (CategoryDetailItem item : allCategoryItems) {
-            percentages.add((float) item.percentage);
-            colors.add(item.color);
-
-            LinearLayout legendRow = new LinearLayout(getContext());
-            legendRow.setOrientation(LinearLayout.HORIZONTAL);
-            legendRow.setPadding(0, 4, 0, 4);
-
-            TextView dot = new TextView(getContext());
-            dot.setText("● ");
-            dot.setTextColor(item.color);
-            dot.setTextSize(12f);
-
-            TextView name = new TextView(getContext());
-            name.setText(item.name.split(" & ")[0]);
-            name.setTextColor(Color.parseColor("#424242"));
-            name.setTextSize(12f);
-            name.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-            TextView percent = new TextView(getContext());
-            percent.setText(item.percentage + "%");
-            percent.setTextColor(Color.parseColor("#424242"));
-            percent.setTextSize(12f);
-            percent.setTypeface(null, Typeface.BOLD);
-
-            legendRow.addView(dot);
-            legendRow.addView(name);
-            legendRow.addView(percent);
-            layoutLegendContainer.addView(legendRow);
-        }
-
-        if (!allCategoryItems.isEmpty()) {
-            donutChartView.setData(percentages, colors, allCategoryItems.get(0).percentage + "%");
-        }
 
         categoryAdapter = new CategoryAdapter(allCategoryItems);
         rvCategorySpending.setAdapter(categoryAdapter);
@@ -609,129 +543,6 @@ public class StatisticFragment extends Fragment {
                 this.tvAmount = tvAmount;
                 this.tvPercent = tvPercent;
                 this.pb = pb;
-            }
-        }
-    }
-
-    // =========================================================================
-    // CANVAS DRAWING CUSTOM VIEWS: BIỂU ĐỒ HÌNH VÀNH KHĂN (DONUT) & CỘT (BAR)
-    // =========================================================================
-
-    public static class DonutChartView extends View {
-        private final List<Float> sweepAngles = new ArrayList<>();
-        private final List<Integer> colors = new ArrayList<>();
-        private String centerText = "38%";
-
-        public DonutChartView(Context context) {
-            super(context);
-        }
-
-        public void setData(List<Float> percentages, List<Integer> colorList, String mainPercent) {
-            sweepAngles.clear();
-            colors.clear();
-            this.centerText = mainPercent;
-
-            float total = 0;
-            for (float p : percentages) total += p;
-            for (int i = 0; i < percentages.size(); i++) {
-                float angle = (percentages.get(i) / (total > 0 ? total : 100f)) * 360f;
-                sweepAngles.add(angle);
-                colors.add(colorList.get(i));
-            }
-            invalidate();
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
-            float width = getWidth();
-            float height = getHeight();
-            if (width <= 0 || height <= 0) return;
-
-            float radius = Math.min(width, height) / 2f - 24f;
-            float strokeWidth = 32f;
-
-            RectF rectF = new RectF(width / 2f - radius, height / 2f - radius,
-                    width / 2f + radius, height / 2f + radius);
-
-            Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(strokeWidth);
-
-            float startAngle = -90f;
-            for (int i = 0; i < sweepAngles.size(); i++) {
-                paint.setColor(colors.get(i));
-                canvas.drawArc(rectF, startAngle, sweepAngles.get(i) - 3f, false, paint);
-                startAngle += sweepAngles.get(i);
-            }
-
-            // Vẽ chữ trung tâm
-            Paint subPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            subPaint.setTextAlign(Paint.Align.CENTER);
-            subPaint.setTextSize(18f);
-            subPaint.setColor(Color.parseColor("#757575"));
-            canvas.drawText("CAO NHẤT", width / 2f, height / 2f - 10f, subPaint);
-
-            Paint mainPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            mainPaint.setTextAlign(Paint.Align.CENTER);
-            mainPaint.setTextSize(36f);
-            mainPaint.setFakeBoldText(true);
-            mainPaint.setColor(Color.parseColor("#0B5A4B"));
-            canvas.drawText(centerText, width / 2f, height / 2f + 28f, mainPaint);
-        }
-    }
-
-    public static class BarChartView extends View {
-        private final float[] values = {5.1f, 7.8f, 6.4f, 5.5f};
-        private final String[] labels = {"T1", "T2", "T3", "T4 (Nay)"};
-
-        public BarChartView(Context context) {
-            super(context);
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
-            float width = getWidth();
-            float height = getHeight();
-            if (width <= 0 || height <= 0) return;
-
-            float maxVal = 10.0f;
-            float barWidth = 46f;
-            float spacing = (width - (values.length * barWidth)) / (values.length + 1);
-
-            Paint barPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            textPaint.setTextAlign(Paint.Align.CENTER);
-            textPaint.setTextSize(22f);
-
-            for (int i = 0; i < values.length; i++) {
-                float left = spacing + i * (barWidth + spacing);
-                float right = left + barWidth;
-                float barHeight = (values[i] / maxVal) * (height - 75f);
-                float top = height - 40f - barHeight;
-                float bottom = height - 40f;
-
-                if (i == values.length - 1) {
-                    barPaint.setColor(Color.parseColor("#0B5A4B")); // Cột hiện tại màu xanh rêu đậm
-                } else {
-                    barPaint.setColor(Color.parseColor("#A7F3D0")); // Các tuần trước màu xanh rêu nhạt
-                }
-
-                canvas.drawRoundRect(new RectF(left, top, right, bottom), 8f, 8f, barPaint);
-
-                textPaint.setColor(Color.parseColor("#555555"));
-                textPaint.setFakeBoldText(false);
-                canvas.drawText(values[i] + "M", left + barWidth / 2f, top - 10f, textPaint);
-
-                if (i == values.length - 1) {
-                    textPaint.setFakeBoldText(true);
-                    textPaint.setColor(Color.parseColor("#0B5A4B"));
-                } else {
-                    textPaint.setFakeBoldText(false);
-                    textPaint.setColor(Color.parseColor("#757575"));
-                }
-                canvas.drawText(labels[i], left + barWidth / 2f, height - 10f, textPaint);
             }
         }
     }
