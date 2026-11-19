@@ -4,21 +4,15 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.widget.Toolbar;
 
 import com.vhu.smartspend.R;
-import com.vhu.smartspend.database.TransactionDAO;
-import com.vhu.smartspend.model.Transaction;
+import com.vhu.smartspend.utils.CsvExporter;
 import com.vhu.smartspend.utils.SessionManager;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -50,7 +44,22 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        // Đọc extras từ Intent nếu có khi từ LoginActivity chuyển sang
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            int userId = extras.getInt("user_id", -1);
+            String username = extras.getString("username");
+            String fullName = extras.getString("full_name");
+            String role = extras.getString("role");
+            if (userId != -1 && username != null && !username.isEmpty()) {
+                // Session already active or updated via LoginActivity
+            }
+        }
+
         setContentView(R.layout.activity_main);
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         // Nạp SettingFragment làm màn hình mặc định
         if (savedInstanceState == null) {
@@ -91,62 +100,16 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
             return true;
         } else if (id == MENU_EXPORT_CSV) {
-            exportCsvReport();
+            CsvExporter.exportTransactionsToCsv(this, sessionManager.getUserId());
             return true;
         } else if (id == MENU_LOGOUT) {
             sessionManager.logout();
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    private void exportCsvReport() {
-        TransactionDAO dao = new TransactionDAO(this);
-        List<Transaction> list = dao.getAllTransactionsByUserId(sessionManager.getUserId());
-        if (list.isEmpty()) {
-            list = dao.getAllTransactions();
-        }
-
-        if (list.isEmpty()) {
-            Toast.makeText(this, "Không có giao dịch để xuất báo cáo CSV!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        StringBuilder csv = new StringBuilder();
-        csv.append("ID,Tiêu đề,Số tiền (VND),Loại,Danh mục,Ngày giao dịch,Ghi chú\n");
-        for (Transaction t : list) {
-            String type = "INCOME".equalsIgnoreCase(t.getCategoryType()) ? "Thu nhập" : "Chi tiêu";
-            String cat = t.getCategoryName() != null ? t.getCategoryName() : "";
-            String note = t.getNote() != null ? t.getNote().replace(",", " ") : "";
-            String title = t.getTitle() != null ? t.getTitle().replace(",", " ") : "";
-
-            csv.append(t.getTransactionId()).append(",")
-                    .append(title).append(",")
-                    .append(t.getAmount()).append(",")
-                    .append(type).append(",")
-                    .append(cat).append(",")
-                    .append(t.getTransactionDate()).append(",")
-                    .append(note).append("\n");
-        }
-
-        try {
-            File exportDir = getExternalFilesDir(null);
-            if (exportDir == null) {
-                exportDir = getFilesDir();
-            }
-            File file = new File(exportDir, "SmartSpend_Report.csv");
-            FileWriter writer = new FileWriter(file);
-            writer.write(csv.toString());
-            writer.flush();
-            writer.close();
-
-            Toast.makeText(this, "Đã xuất báo cáo CSV:\n" + file.getAbsolutePath(), Toast.LENGTH_LONG).show();
-        } catch (IOException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Lỗi khi xuất file CSV: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
     }
 }

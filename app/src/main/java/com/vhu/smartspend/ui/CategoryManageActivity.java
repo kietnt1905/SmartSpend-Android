@@ -16,6 +16,7 @@ import com.vhu.smartspend.R;
 import com.vhu.smartspend.adapter.CategoryGridAdapter;
 import com.vhu.smartspend.database.CategoryDAO;
 import com.vhu.smartspend.model.Category;
+import com.vhu.smartspend.utils.SessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ public class CategoryManageActivity extends AppCompatActivity {
     private GridView gvCategories;
 
     private CategoryDAO categoryDAO;
+    private SessionManager sessionManager;
     private CategoryGridAdapter gridAdapter;
     private List<Category> categoryList;
     private Category selectedCategory = null;
@@ -39,6 +41,7 @@ public class CategoryManageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_category_manage);
 
         categoryDAO = new CategoryDAO(this);
+        sessionManager = new SessionManager(this);
 
         initViews();
         loadCategories();
@@ -143,6 +146,10 @@ public class CategoryManageActivity extends AppCompatActivity {
     }
 
     private void deleteCategory() {
+        if (!"ADMIN".equalsIgnoreCase(sessionManager.getRole())) {
+            Toast.makeText(this, "Chỉ tài khoản ADMIN mới có quyền xóa danh mục!", Toast.LENGTH_LONG).show();
+            return;
+        }
         if (selectedCategory == null) {
             Toast.makeText(this, "Vui lòng chọn danh mục cần xóa!", Toast.LENGTH_SHORT).show();
             return;
@@ -151,6 +158,10 @@ public class CategoryManageActivity extends AppCompatActivity {
     }
 
     private void showDeleteConfirmDialog(Category cat) {
+        if (!"ADMIN".equalsIgnoreCase(sessionManager.getRole())) {
+            Toast.makeText(this, "Chỉ tài khoản ADMIN mới có quyền xóa danh mục!", Toast.LENGTH_LONG).show();
+            return;
+        }
         new AlertDialog.Builder(this)
                 .setTitle("Xác nhận xóa")
                 .setMessage("Bạn có chắc chắn muốn xóa danh mục '" + cat.getName() + "'?")
