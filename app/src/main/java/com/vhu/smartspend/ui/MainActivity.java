@@ -9,7 +9,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.utils.CsvExporter;
 import com.vhu.smartspend.utils.SessionManager;
@@ -49,23 +55,46 @@ public class MainActivity extends AppCompatActivity {
         if (extras != null) {
             int userId = extras.getInt("user_id", -1);
             String username = extras.getString("username");
-            String fullName = extras.getString("full_name");
-            String role = extras.getString("role");
             if (userId != -1 && username != null && !username.isEmpty()) {
-                // Session already active or updated via LoginActivity
+                // Session already active via LoginActivity
             }
         }
 
+        WindowCompat.enableEdgeToEdge(getWindow());
         setContentView(R.layout.activity_main);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // Nạp SettingFragment làm màn hình mặc định
-        if (savedInstanceState == null) {
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigation);
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            Fragment selectedFragment;
+            int itemId = item.getItemId();
+
+            if (itemId == R.id.nav_home) {
+                selectedFragment = new HomeFragment();
+            } else if (itemId == R.id.nav_statistic) {
+                selectedFragment = new StatisticFragment();
+            } else if (itemId == R.id.nav_account) {
+                selectedFragment = new SettingFragment();
+            } else {
+                selectedFragment = new HomeFragment();
+            }
+
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new SettingFragment())
+                    .replace(R.id.fragment_container, selectedFragment)
                     .commit();
+            return true;
+        });
+
+        if (savedInstanceState == null) {
+            bottomNavigationView.setSelectedItemId(R.id.nav_home);
         }
     }
 
