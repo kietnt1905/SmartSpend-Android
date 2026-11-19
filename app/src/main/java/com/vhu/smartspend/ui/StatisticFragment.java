@@ -110,7 +110,6 @@ public class StatisticFragment extends Fragment {
         selectedDay = currentCalendar.get(Calendar.DAY_OF_MONTH);
 
         initViews(view);
-        setupWalletSpinner();
         setupTimeFilterTabs();
         setupDatePicker();
         setupInstantSearchView();
@@ -128,7 +127,6 @@ public class StatisticFragment extends Fragment {
 
     private void initViews(View view) {
         nestedScrollView = view.findViewById(R.id.nestedScrollView);
-        spWalletFilter = view.findViewById(R.id.spWalletFilter);
         tabWeek = view.findViewById(R.id.tabWeek);
         tabMonth = view.findViewById(R.id.tabMonth);
         tabYear = view.findViewById(R.id.tabYear);

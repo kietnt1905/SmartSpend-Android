@@ -15,11 +15,12 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- 1. Header Top Bar -->
+        <!-- 1. Header Top Bar (SmartSpend Logo & Title + Notification & Avatar) -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            <!-- Left: App Logo + SMARTSPEND / Thống Kê -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -29,29 +30,41 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/tvHeaderTitle"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="#E0F2F1"
+                    android:gravity="center"
+                    android:text="💳"
+                    android:textSize="20sp" />
+
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Thống Kê"
-                    android:textColor="#1A1A1A"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
+                    android:layout_marginStart="10dp"
+                    android:orientation="vertical">
 
-                <Space
-                    android:layout_width="10dp"
-                    android:layout_height="wrap_content" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.05"
+                        android:text="SMARTSPEND"
+                        android:textColor="#0B5A4B"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
 
-                <!-- Wallet Selector Spinner Pill -->
-                <Spinner
-                    android:id="@+id/spWalletFilter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="34dp"
-                    android:background="@android:drawable/btn_dropdown"
-                    android:paddingStart="6dp"
-                    android:paddingEnd="6dp" />
+                    <TextView
+                        android:id="@+id/tvHeaderTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Thống Kê"
+                        android:textColor="#1A1A1A"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
 
-            <!-- Action Icons -->
+            <!-- Right: Notification Bell 🔔 + User Avatar 👤 -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -61,29 +74,23 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:id="@+id/btnHeaderNotification"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="#F0F4F8"
                     android:gravity="center"
-                    android:text="🎚️"
+                    android:text="🔔"
                     android:textSize="16sp" />
 
                 <TextView
-                    android:id="@+id/btnCalendarHeader"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="📅"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_marginStart="4dp"
+                    android:layout_marginStart="8dp"
                     android:background="#0B5A4B"
                     android:gravity="center"
                     android:text="👤"
                     android:textColor="#FFFFFF"
-                    android:textSize="14sp" />
+                    android:textSize="16sp" />
             </LinearLayout>
         </RelativeLayout>
 
