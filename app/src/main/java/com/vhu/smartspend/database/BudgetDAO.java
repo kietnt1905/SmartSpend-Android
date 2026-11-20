@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.vhu.smartspend.model.Budget;
+import com.vhu.smartspend.model.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -666,6 +667,61 @@ public class BudgetDAO {
         public String colorCode;
         public int transactionCount;
         public double totalAmount;
+    }
+
+    /**
+     * Tính tổng số dư khả dụng (Tổng Thu - Tổng Chi toàn thời gian) của người dùng.
+     */
+    public double getTotalBalance(int userId) {
+        double balance = 0;
+        String sql = "SELECT COALESCE(SUM(CASE WHEN c.type = 'INCOME' THEN t.amount ELSE -t.amount END), 0) " +
+                "FROM transactions t INNER JOIN categories c ON t.category_id = c.category_id " +
+                "WHERE t.user_id = ?";
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase();
+             Cursor cursor = db.rawQuery(sql, new String[]{String.valueOf(userId)})) {
+            if (cursor.moveToFirst()) {
+                balance = cursor.getDouble(0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Lỗi khi getTotalBalance: " + e.getMessage(), e);
+        }
+        return balance;
+    }
+
+    /**
+     * Lấy danh sách giao dịch gần đây nhất của người dùng cho màn hình Trang chủ.
+     */
+    public List<Transaction> getRecentTransactions(int userId, int limit) {
+        List<Transaction> list = new ArrayList<>();
+        String sql = "SELECT t.*, c.name AS category_name, c.type AS category_type, " +
+                "c.icon_name AS category_icon_name, c.color_code AS category_color_code " +
+                "FROM transactions t " +
+                "LEFT JOIN categories c ON t.category_id = c.category_id " +
+                "WHERE t.user_id = ? " +
+                "ORDER BY t.transaction_date DESC, t.transaction_id DESC LIMIT ?";
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase();
+             Cursor c = db.rawQuery(sql, new String[]{String.valueOf(userId), String.valueOf(limit)})) {
+            while (c.moveToNext()) {
+                Transaction t = new Transaction(
+                        c.getInt(c.getColumnIndexOrThrow("transaction_id")),
+                        c.getInt(c.getColumnIndexOrThrow("user_id")),
+                        c.getInt(c.getColumnIndexOrThrow("category_id")),
+                        c.getString(c.getColumnIndexOrThrow("title")),
+                        c.getDouble(c.getColumnIndexOrThrow("amount")),
+                        c.getString(c.getColumnIndexOrThrow("transaction_date")),
+                        c.getString(c.getColumnIndexOrThrow("note")),
+                        c.getString(c.getColumnIndexOrThrow("receipt_uri"))
+                );
+                t.setCategoryName(c.getString(c.getColumnIndexOrThrow("category_name")));
+                t.setCategoryType(c.getString(c.getColumnIndexOrThrow("category_type")));
+                t.setCategoryIconName(c.getString(c.getColumnIndexOrThrow("category_icon_name")));
+                t.setCategoryColorCode(c.getString(c.getColumnIndexOrThrow("category_color_code")));
+                list.add(t);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Lỗi khi getRecentTransactions: " + e.getMessage(), e);
+        }
+        return list;
     }
 
     // =========================================================================

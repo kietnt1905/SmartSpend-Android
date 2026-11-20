@@ -217,7 +217,7 @@
             android:layout_marginTop="20dp"
             android:orientation="horizontal"/>
 
-        <!-- 4. Monthly Budget Summary Card ("Ngân sách tháng 10") -->
+        <!-- 4. Monthly Budget Summary Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -237,14 +237,16 @@
                     android:layout_height="wrap_content">
 
                     <TextView
+                        android:id="@+id/tvBudgetTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Ngân sách tháng 10"
+                        android:text="Ngân sách tháng này"
                         android:textColor="#1A1A1A"
                         android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvBudgetDaysLeft"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
@@ -253,7 +255,7 @@
                         android:paddingTop="3dp"
                         android:paddingEnd="8dp"
                         android:paddingBottom="3dp"
-                        android:text="Còn 7 ngày"
+                        android:text="Còn 0 ngày"
                         android:textColor="#2E7D32"
                         android:textSize="11sp"
                         android:textStyle="bold" />
@@ -265,29 +267,32 @@
                     android:layout_marginTop="10dp">
 
                     <TextView
+                        android:id="@+id/tvBudgetUsed"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Đã dùng: 24.850.000 đ"
+                        android:text="Đã dùng: 0 đ"
                         android:textColor="#424242"
                         android:textSize="12sp"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvBudgetLimit"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
-                        android:text="Hạn mức: 30.000.000 đ"
+                        android:text="Hạn mức: 5,000,000 đ"
                         android:textColor="#757575"
                         android:textSize="12sp" />
                 </RelativeLayout>
 
                 <ProgressBar
+                    android:id="@+id/pbHomeBudget"
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
                     android:layout_height="10dp"
                     android:layout_marginTop="8dp"
                     android:max="100"
-                    android:progress="82" />
+                    android:progress="0" />
 
                 <!-- Remaining Budget Tip -->
                 <androidx.cardview.widget.CardView
@@ -304,9 +309,10 @@
                         android:padding="10dp">
 
                         <TextView
+                            android:id="@+id/tvBudgetRemaining"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Còn lại 5.150.000 đ (~735.000 đ/ngày)"
+                            android:text="Còn lại 0 đ"
                             android:textColor="#1565C0"
                             android:textSize="12sp"
                             android:textStyle="bold" />
@@ -324,10 +330,6 @@
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>
-
-        <!-- 5. Accounts & Wallets Section ("Tài khoản & Ví") -->
-
-        <!-- Wallets Horizontal Cards Row -->
 
         <!-- 6. Recent Transactions Section ("Giao dịch gần đây") -->
         <RelativeLayout
@@ -351,25 +353,19 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:layout_width="20dp"
+                    android:id="@+id/tvRecentCount"
+                    android:layout_width="wrap_content"
                     android:layout_height="20dp"
                     android:layout_marginStart="8dp"
                     android:background="#E3F2FD"
                     android:gravity="center"
-                    android:text="4"
+                    android:minWidth="22dp"
+                    android:paddingHorizontal="6dp"
+                    android:text="0"
                     android:textColor="#1565C0"
                     android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:text="Xem tất cả ❯"
-                android:textColor="#0B5A4B"
-                android:textSize="12sp"
-                android:textStyle="bold" />
         </RelativeLayout>
 
         <!-- Transactions Container -->
@@ -387,231 +383,21 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Item 1: The Coffee House -->
-                <RelativeLayout
+                <TextView
+                    android:id="@+id/tvEmptyRecentTransactions"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingTop="6dp"
-                    android:paddingBottom="6dp">
+                    android:gravity="center"
+                    android:padding="20dp"
+                    android:text="Chưa có giao dịch nào. Bấm nút + để thêm mới!"
+                    android:textColor="#757575"
+                    android:textSize="13sp" />
 
-                    <TextView
-                        android:id="@+id/icon1"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="#E0F2FE"
-                        android:gravity="center"
-                        android:text="☕"
-                        android:textSize="18sp" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="12dp"
-                        android:layout_toEndOf="@id/icon1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="The Coffee House"
-                            android:textColor="#1A1A1A"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Ví tiền mặt  •  Hôm nay 09:30"
-                            android:textColor="#757575"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:text="-45.000 đ"
-                        android:textColor="#C62828"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </RelativeLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="#F0F0F0" />
-
-                <!-- Item 2: Nhận lương -->
-                <RelativeLayout
+                <LinearLayout
+                    android:id="@+id/layoutRecentTransactions"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingTop="6dp"
-                    android:paddingBottom="6dp">
-
-                    <TextView
-                        android:id="@+id/icon2"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="#A7F3D0"
-                        android:gravity="center"
-                        android:text="👛"
-                        android:textSize="18sp" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="12dp"
-                        android:layout_toEndOf="@id/icon2"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Nhận lương tháng ..."
-                            android:textColor="#1A1A1A"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Vietcombank  •  Hôm qua"
-                            android:textColor="#757575"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:text="+35.000.000 đ"
-                        android:textColor="#2E7D32"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </RelativeLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="#F0F0F0" />
-
-                <!-- Item 3: WinMart -->
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingTop="6dp"
-                    android:paddingBottom="6dp">
-
-                    <TextView
-                        android:id="@+id/icon3"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="#E0F2FE"
-                        android:gravity="center"
-                        android:text="🛒"
-                        android:textSize="18sp" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="12dp"
-                        android:layout_toEndOf="@id/icon3"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Siêu thị WinMart"
-                            android:textColor="#1A1A1A"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Thẻ tín dụng TCB  •  28/10"
-                            android:textColor="#757575"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:text="-620.000 đ"
-                        android:textColor="#C62828"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </RelativeLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="#F0F0F0" />
-
-                <!-- Item 4: EVN -->
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingTop="6dp"
-                    android:paddingBottom="6dp">
-
-                    <TextView
-                        android:id="@+id/icon4"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="#FFEBEE"
-                        android:gravity="center"
-                        android:text="⚡"
-                        android:textSize="18sp" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="12dp"
-                        android:layout_toEndOf="@id/icon4"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Tiền điện EVN"
-                            android:textColor="#1A1A1A"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="MB Bank  •  26/10"
-                            android:textColor="#757575"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:text="-1.450.000 đ"
-                        android:textColor="#C62828"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </RelativeLayout>
-
+                    android:orientation="vertical" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

@@ -1,5 +1,6 @@
 package com.vhu.smartspend.ui;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.ClipDrawable;
@@ -78,7 +79,12 @@ public class StatisticFragment extends Fragment {
     private int selectedMonth; // 0-based (0..11)
     private int currentTab = TAB_MONTH;
     private int currentType = TYPE_EXPENSE;
-    private final int currentUserId = 1;
+
+    private int getCurrentUserId() {
+        if (getContext() == null) return 1;
+        int id = getContext().getSharedPreferences("SmartSpendPrefs", Context.MODE_PRIVATE).getInt("user_id", 1);
+        return id > 0 ? id : 1;
+    }
 
     public StatisticFragment() {
         // Required empty public constructor
@@ -200,7 +206,7 @@ public class StatisticFragment extends Fragment {
 
         btn503020Rule.setOnClickListener(v -> {
             if (getContext() == null) return;
-            Budget503020Dialog.show(getContext(), currentUserId, this::loadStatisticData);
+            Budget503020Dialog.show(getContext(), getCurrentUserId(), this::loadStatisticData);
         });
     }
 
@@ -404,15 +410,16 @@ public class StatisticFragment extends Fragment {
 
         String datePrefix = getCurrentDatePrefix();
         String prevPrefix = getPreviousDatePrefix();
+        int userId = getCurrentUserId();
 
-        double totalExpense = budgetDAO.getTotalAmountByDatePrefix(currentUserId, Category.TYPE_EXPENSE, datePrefix);
-        double totalIncome = budgetDAO.getTotalAmountByDatePrefix(currentUserId, Category.TYPE_INCOME, datePrefix);
+        double totalExpense = budgetDAO.getTotalAmountByDatePrefix(userId, Category.TYPE_EXPENSE, datePrefix);
+        double totalIncome = budgetDAO.getTotalAmountByDatePrefix(userId, Category.TYPE_INCOME, datePrefix);
         double netBalance = totalIncome - totalExpense;
 
         boolean isExpenseMode = (currentType == TYPE_EXPENSE);
         double mainAmount = isExpenseMode ? totalExpense : totalIncome;
         double prevAmount = budgetDAO.getTotalAmountByDatePrefix(
-                currentUserId,
+                userId,
                 isExpenseMode ? Category.TYPE_EXPENSE : Category.TYPE_INCOME,
                 prevPrefix
         );
@@ -459,7 +466,7 @@ public class StatisticFragment extends Fragment {
 
         // Truy vấn danh sách chi tiết danh mục theo loại đang chọn (EXPENSE / INCOME)
         String queryType = isExpenseMode ? Category.TYPE_EXPENSE : Category.TYPE_INCOME;
-        List<BudgetDAO.CategorySummary> summaries = budgetDAO.getCategorySummaryByDatePrefix(currentUserId, queryType, datePrefix);
+        List<BudgetDAO.CategorySummary> summaries = budgetDAO.getCategorySummaryByDatePrefix(userId, queryType, datePrefix);
 
         allCategoryItems = new ArrayList<>();
         for (BudgetDAO.CategorySummary summary : summaries) {
