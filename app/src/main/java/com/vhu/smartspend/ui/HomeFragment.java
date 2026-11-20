@@ -172,9 +172,11 @@ public class HomeFragment extends Fragment {
             row.setClickable(true);
             row.setFocusable(true);
 
+            int borderColor = parseCategoryColor(tx.getCategoryColorCode(), isIncome ? "#0A5C36" : "#C62828");
             GradientDrawable circle = new GradientDrawable();
             circle.setShape(GradientDrawable.OVAL);
-            circle.setColor(Color.parseColor(isIncome ? "#D1FAE5" : "#FFE4DE"));
+            circle.setColor(Color.argb(30, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
+            circle.setStroke(Math.round(2 * d), borderColor);
 
             TextView tvIcon = new TextView(getContext());
             tvIcon.setLayoutParams(new LinearLayout.LayoutParams(Math.round(40 * d), Math.round(40 * d)));
@@ -238,16 +240,40 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    private int parseCategoryColor(String colorCode, String fallbackHex) {
+        if (colorCode != null && !colorCode.trim().isEmpty()) {
+            try {
+                return Color.parseColor(colorCode.trim());
+            } catch (Exception ignored) {
+            }
+        }
+        return Color.parseColor(fallbackHex);
+    }
+
     private String mapEmoji(String iconName) {
-        if (iconName == null) return "📌";
+        if (iconName == null) return "⭐";
         switch (iconName.toLowerCase(Locale.getDefault())) {
-            case "ic_food": return "🍴";
+            case "ic_food": return "🍔";
+            case "ic_coffee": return "☕";
             case "ic_school": return "📚";
-            case "ic_shopping": return "🛍️";
+            case "ic_shopping": return "🛒";
             case "ic_transport": return "🚗";
+            case "ic_home": return "🏠";
+            case "ic_bill": return "⚡";
+            case "ic_entertainment": return "🎮";
+            case "ic_health": return "💊";
+            case "ic_beauty": return "💄";
+            case "ic_travel": return "✈️";
+            case "ic_pet": return "🐾";
+            case "ic_sport": return "🏋️";
+            case "ic_phone": return "📱";
+            case "ic_gift": return "🎁";
             case "ic_award": return "🎓";
             case "ic_work": return "💼";
-            default: return "📌";
+            case "ic_savings": return "💰";
+            case "ic_invest": return "📈";
+            case "ic_other": return "⭐";
+            default: return "⭐";
         }
     }
 }

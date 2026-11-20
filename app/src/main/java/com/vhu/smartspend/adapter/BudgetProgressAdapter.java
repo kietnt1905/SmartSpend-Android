@@ -146,14 +146,16 @@ public class BudgetProgressAdapter extends RecyclerView.Adapter<BudgetProgressAd
     }
 
     /**
-     * Tạo hình nền tròn màu pastel cho Icon danh mục
+     * Tạo hình nền tròn có viền màu theo danh mục
      */
     private void setCircularBackground(View view, int color) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setShape(GradientDrawable.OVAL);
-        // Làm nhạt màu nền icon (alpha ~ 15%)
+        // Làm nhạt màu nền icon (alpha ~ 15%) và dùng màu danh mục làm viền
         int alphaColor = Color.argb(40, Color.red(color), Color.green(color), Color.blue(color));
         drawable.setColor(alphaColor);
+        float density = view.getResources().getDisplayMetrics().density;
+        drawable.setStroke(Math.round(2 * density), color);
         view.setBackground(drawable);
     }
 
@@ -171,21 +173,45 @@ public class BudgetProgressAdapter extends RecyclerView.Adapter<BudgetProgressAd
     }
 
     /**
-     * Mapping Emoji cho icon danh mục
+     * Mapping Emoji cho icon danh mục (20 icon chuẩn)
      */
     private String getEmojiForCategory(String name, String iconName) {
-        if (name == null) return "📂";
+        if (iconName != null) {
+            switch (iconName.toLowerCase(Locale.getDefault())) {
+                case "ic_food": return "🍔";
+                case "ic_coffee": return "☕";
+                case "ic_school": return "📚";
+                case "ic_shopping": return "🛒";
+                case "ic_transport": return "🚗";
+                case "ic_home": return "🏠";
+                case "ic_bill": return "⚡";
+                case "ic_entertainment": return "🎮";
+                case "ic_health": return "💊";
+                case "ic_beauty": return "💄";
+                case "ic_travel": return "✈️";
+                case "ic_pet": return "🐾";
+                case "ic_sport": return "🏋️";
+                case "ic_phone": return "📱";
+                case "ic_gift": return "🎁";
+                case "ic_award": return "🎓";
+                case "ic_work": return "💼";
+                case "ic_savings": return "💰";
+                case "ic_invest": return "📈";
+                case "ic_other": return "⭐";
+            }
+        }
+        if (name == null) return "⭐";
         String lowerName = name.toLowerCase(Locale.getDefault());
 
-        if (lowerName.contains("ăn") || lowerName.contains("uống") || lowerName.contains("nhà hàng")) return "🍴";
+        if (lowerName.contains("ăn") || lowerName.contains("uống") || lowerName.contains("nhà hàng")) return "🍔";
         if (lowerName.contains("hóa đơn") || lowerName.contains("điện") || lowerName.contains("nước")) return "⚡";
-        if (lowerName.contains("mua sắm") || lowerName.contains("tiêu dùng")) return "🛍️";
+        if (lowerName.contains("mua sắm") || lowerName.contains("tiêu dùng")) return "🛒";
         if (lowerName.contains("di chuyển") || lowerName.contains("đi lại") || lowerName.contains("xe")) return "🚗";
         if (lowerName.contains("học") || lowerName.contains("trường")) return "🎓";
         if (lowerName.contains("giải trí") || lowerName.contains("game")) return "🎮";
-        if (lowerName.contains("lương") || lowerName.contains("thu nhập")) return "💵";
+        if (lowerName.contains("lương") || lowerName.contains("thu nhập")) return "💰";
 
-        return "📂";
+        return "⭐";
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

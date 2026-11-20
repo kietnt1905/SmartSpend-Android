@@ -570,22 +570,29 @@ public class StatisticFragment extends Fragment {
     }
 
     private String mapIconEmoji(String iconName) {
-        if (iconName == null) return "📌";
+        if (iconName == null) return "⭐";
         switch (iconName.toLowerCase(Locale.getDefault())) {
-            case "ic_food":
-                return "🍴";
-            case "ic_school":
-                return "📚";
-            case "ic_shopping":
-                return "🛍️";
-            case "ic_transport":
-                return "🚗";
-            case "ic_award":
-                return "🎓";
-            case "ic_work":
-                return "💼";
-            default:
-                return "📌";
+            case "ic_food": return "🍔";
+            case "ic_coffee": return "☕";
+            case "ic_school": return "📚";
+            case "ic_shopping": return "🛒";
+            case "ic_transport": return "🚗";
+            case "ic_home": return "🏠";
+            case "ic_bill": return "⚡";
+            case "ic_entertainment": return "🎮";
+            case "ic_health": return "💊";
+            case "ic_beauty": return "💄";
+            case "ic_travel": return "✈️";
+            case "ic_pet": return "🐾";
+            case "ic_sport": return "🏋️";
+            case "ic_phone": return "📱";
+            case "ic_gift": return "🎁";
+            case "ic_award": return "🎓";
+            case "ic_work": return "💼";
+            case "ic_savings": return "💰";
+            case "ic_invest": return "📈";
+            case "ic_other": return "⭐";
+            default: return "⭐";
         }
     }
 
@@ -714,6 +721,8 @@ public class StatisticFragment extends Fragment {
             GradientDrawable iconBg = new GradientDrawable();
             iconBg.setShape(GradientDrawable.OVAL);
             iconBg.setColor(item.iconBgColor);
+            float density = holder.tvIcon.getResources().getDisplayMetrics().density;
+            iconBg.setStroke(Math.round(2 * density), item.color);
             holder.tvIcon.setBackground(iconBg);
 
             holder.tvTitle.setText(item.name);
