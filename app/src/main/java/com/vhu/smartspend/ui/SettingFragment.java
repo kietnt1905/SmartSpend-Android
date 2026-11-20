@@ -117,7 +117,7 @@ public class SettingFragment extends Fragment {
         tvUserFullName.setText(!fullName.isEmpty() ? fullName : "Người dùng");
         tvUsername.setText(!username.isEmpty() ? "@" + username : "@smartspend");
         tvUserRole.setText("Quyền hạn: " + role);
-        tvRoleBadge.setText("✦ TÀI KHOẢN " + role.toUpperCase(Locale.getDefault()));
+        tvRoleBadge.setText("TÀI KHOẢN " + role.toUpperCase(Locale.getDefault()));
     }
 
     private void loadMonthlyLimit() {
