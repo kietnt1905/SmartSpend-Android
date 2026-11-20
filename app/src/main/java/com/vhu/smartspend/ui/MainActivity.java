@@ -9,10 +9,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -63,6 +65,11 @@ public class MainActivity extends AppCompatActivity {
         WindowCompat.enableEdgeToEdge(getWindow());
         setContentView(R.layout.activity_main);
 
+        WindowInsetsControllerCompat insetsController =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        insetsController.setAppearanceLightStatusBars(!sessionManager.isDarkMode());
+        insetsController.setAppearanceLightNavigationBars(!sessionManager.isDarkMode());
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -71,8 +78,14 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        if (toolbar.getOverflowIcon() != null) {
+            toolbar.getOverflowIcon().setTint(ContextCompat.getColor(this, R.color.setting_text_primary));
+        }
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigation);
+        // Tránh BottomNavigationView tự cộng thêm bottom inset lần thứ 2 gây khoảng trống thừa
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNavigationView, (v, insets) -> insets);
+        bottomNavigationView.setPadding(0, 0, 0, 0);
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment selectedFragment;
             int itemId = item.getItemId();
