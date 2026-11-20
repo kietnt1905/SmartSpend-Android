@@ -1,16 +1,329 @@
 package com.vhu.smartspend.ui;
 
+import android.app.DatePickerDialog;
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.vhu.smartspend.R;
+import com.vhu.smartspend.database.TransactionDAO;
+import com.vhu.smartspend.model.Category;
+import com.vhu.smartspend.model.Transaction;
+import com.vhu.smartspend.utils.DateUtils;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 public class AddEditTransactionActivity extends AppCompatActivity {
+
+    public static final String EXTRA_TRANSACTION_ID = "transaction_id";
+
+    private TextView tvScreenTitle, tabExpense, tabIncome, tvAmountLabel, tvAmountSign, tvTransactionDate, tvSaveButtonText;
+    private EditText edtAmount, edtNote;
+    private LinearLayout layoutCategoryGrid;
+    private View layoutReceiptPlaceholder, layoutReceiptPreview;
+    private ImageView imgReceiptPreview;
+
+    private TransactionDAO dao;
+    private List<Category> categories = new ArrayList<>();
+    private String currentType = Category.TYPE_EXPENSE;
+    private int selectedCategoryId = -1;
+    private int editingId = -1;
+    private String receiptUri;
+    private final Calendar calendar = Calendar.getInstance();
+
+    private final ActivityResultLauncher<String[]> pickReceipt =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri == null) return;
+                try {
+                    getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } catch (SecurityException ignored) {
+                }
+                receiptUri = uri.toString();
+                showReceipt(uri);
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        WindowCompat.enableEdgeToEdge(getWindow());
         setContentView(R.layout.activity_add_edit_transaction);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            return insets;
+        });
+
+        dao = new TransactionDAO(this);
+        tvScreenTitle = findViewById(R.id.tvScreenTitle);
+        tabExpense = findViewById(R.id.tabExpense);
+        tabIncome = findViewById(R.id.tabIncome);
+        tvAmountLabel = findViewById(R.id.tvAmountLabel);
+        tvAmountSign = findViewById(R.id.tvAmountSign);
+        edtAmount = findViewById(R.id.edtAmount);
+        layoutCategoryGrid = findViewById(R.id.layoutCategoryGrid);
+        tvTransactionDate = findViewById(R.id.tvTransactionDate);
+        edtNote = findViewById(R.id.edtNote);
+        layoutReceiptPlaceholder = findViewById(R.id.layoutReceiptPlaceholder);
+        layoutReceiptPreview = findViewById(R.id.layoutReceiptPreview);
+        imgReceiptPreview = findViewById(R.id.imgReceiptPreview);
+        tvSaveButtonText = findViewById(R.id.tvSaveButtonText);
+
+        findViewById(R.id.btnCloseTransaction).setOnClickListener(v -> finish());
+        tabExpense.setOnClickListener(v -> switchType(Category.TYPE_EXPENSE));
+        tabIncome.setOnClickListener(v -> switchType(Category.TYPE_INCOME));
+        findViewById(R.id.btnCustomizeCategory).setOnClickListener(v ->
+                startActivity(new Intent(this, CategoryManageActivity.class)));
+        findViewById(R.id.cardDatePicker).setOnClickListener(v -> showDatePicker());
+        findViewById(R.id.boxPickReceipt).setOnClickListener(v -> pickReceipt.launch(new String[]{"image/*"}));
+        findViewById(R.id.btnRemoveReceipt).setOnClickListener(v -> {
+            receiptUri = null;
+            imgReceiptPreview.setImageDrawable(null);
+            layoutReceiptPreview.setVisibility(View.GONE);
+            layoutReceiptPlaceholder.setVisibility(View.VISIBLE);
+        });
+        findViewById(R.id.btnSaveTransaction).setOnClickListener(v -> saveTransaction());
+
+        editingId = getIntent().getIntExtra(EXTRA_TRANSACTION_ID, -1);
+        if (editingId != -1) {
+            loadExisting(editingId);
+        } else {
+            updateTypeUi();
+            tvTransactionDate.setText(DateUtils.toDisplayString(calendar.getTime()));
+            loadCategories();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (dao != null) loadCategories();
+    }
+
+    private void switchType(String type) {
+        if (currentType.equals(type)) return;
+        currentType = type;
+        selectedCategoryId = -1;
+        updateTypeUi();
+        loadCategories();
+    }
+
+    private void updateTypeUi() {
+        boolean isExpense = Category.TYPE_EXPENSE.equals(currentType);
+        tabExpense.setTextColor(Color.parseColor(isExpense ? "#B91C1C" : "#475569"));
+        tabExpense.setBackground(isExpense ? roundedBg("#FFE4DE", 22) : null);
+        tabIncome.setTextColor(Color.parseColor(isExpense ? "#475569" : "#0A5C36"));
+        tabIncome.setBackground(isExpense ? null : roundedBg("#D1FAE5", 22));
+        tvAmountLabel.setText(isExpense ? "Số tiền chi tiêu" : "Số tiền thu nhập");
+        tvAmountSign.setText(isExpense ? "-" : "+");
+        tvAmountSign.setTextColor(Color.parseColor(isExpense ? "#B91C1C" : "#0A5C36"));
+    }
+
+    private void loadCategories() {
+        categories = dao.getCategoriesByType(currentType);
+        if (categories.isEmpty()) categories = dao.getAllCategories();
+
+        boolean exists = false;
+        for (Category c : categories) {
+            if (c.getCategoryId() == selectedCategoryId) {
+                exists = true;
+                break;
+            }
+        }
+        if (!exists && !categories.isEmpty()) selectedCategoryId = categories.get(0).getCategoryId();
+        renderCategories();
+    }
+
+    private void renderCategories() {
+        layoutCategoryGrid.removeAllViews();
+        int cols = 4;
+        for (int i = 0; i < categories.size(); i += cols) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            for (int c = 0; c < cols; c++) {
+                int idx = i + c;
+                if (idx < categories.size()) {
+                    row.addView(buildCategoryItem(categories.get(idx)));
+                } else {
+                    View spacer = new View(this);
+                    spacer.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
+                    row.addView(spacer);
+                }
+            }
+            layoutCategoryGrid.addView(row);
+        }
+    }
+
+    private View buildCategoryItem(Category cat) {
+        boolean selected = cat.getCategoryId() == selectedCategoryId;
+
+        LinearLayout item = new LinearLayout(this);
+        item.setOrientation(LinearLayout.VERTICAL);
+        item.setGravity(Gravity.CENTER_HORIZONTAL);
+        item.setPadding(dp(4), dp(8), dp(4), dp(8));
+        item.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        item.setBackground(selected ? roundedBg("#E9F2FC", 14) : null);
+
+        GradientDrawable circle = new GradientDrawable();
+        circle.setShape(GradientDrawable.OVAL);
+        circle.setColor(Color.parseColor(selected ? "#0A5C36" : "#EAF1FA"));
+
+        ImageView icon = new ImageView(this);
+        icon.setLayoutParams(new LinearLayout.LayoutParams(dp(48), dp(48)));
+        icon.setPadding(dp(12), dp(12), dp(12), dp(12));
+        icon.setBackground(circle);
+        icon.setImageResource(getCategoryIcon(cat.getIconName()));
+        icon.setColorFilter(selected ? Color.WHITE : Color.parseColor("#1E293B"));
+
+        TextView label = new TextView(this);
+        label.setPadding(0, dp(6), 0, 0);
+        label.setGravity(Gravity.CENTER);
+        label.setText(cat.getName());
+        label.setTextSize(12f);
+        label.setMaxLines(1);
+        label.setEllipsize(TextUtils.TruncateAt.END);
+        label.setTextColor(Color.parseColor(selected ? "#0F172A" : "#334155"));
+        label.setTypeface(null, selected ? Typeface.BOLD : Typeface.NORMAL);
+
+        item.addView(icon);
+        item.addView(label);
+        item.setOnClickListener(v -> {
+            selectedCategoryId = cat.getCategoryId();
+            renderCategories();
+        });
+        return item;
+    }
+
+    private int getCategoryIcon(String iconName) {
+        if (iconName == null) return R.drawable.ic_tx_category_default;
+        switch (iconName.toLowerCase(Locale.getDefault())) {
+            case "ic_food": return R.drawable.ic_tx_food;
+            case "ic_school": return R.drawable.ic_tx_school;
+            case "ic_shopping": return R.drawable.ic_tx_shopping;
+            case "ic_transport": return R.drawable.ic_tx_transport;
+            case "ic_award": return R.drawable.ic_tx_award;
+            case "ic_work": return R.drawable.ic_tx_work;
+            default: return R.drawable.ic_tx_category_default;
+        }
+    }
+
+    private void showDatePicker() {
+        new DatePickerDialog(this, (view, y, m, d) -> {
+            calendar.set(y, m, d);
+            tvTransactionDate.setText(DateUtils.toDisplayString(calendar.getTime()));
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+    }
+
+    private void loadExisting(int id) {
+        Transaction tx = dao.getTransactionById(id);
+        if (tx == null) {
+            Toast.makeText(this, "Không tìm thấy giao dịch", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+        tvScreenTitle.setText("Sửa Giao Dịch");
+        tvSaveButtonText.setText("Cập nhật giao dịch");
+        currentType = Category.TYPE_INCOME.equalsIgnoreCase(tx.getCategoryType())
+                ? Category.TYPE_INCOME : Category.TYPE_EXPENSE;
+        selectedCategoryId = tx.getCategoryId();
+        updateTypeUi();
+        loadCategories();
+
+        edtAmount.setText(String.valueOf(Math.round(tx.getAmount())));
+        edtNote.setText(!TextUtils.isEmpty(tx.getNote()) ? tx.getNote() : tx.getTitle());
+
+        Date parsed = DateUtils.parseDbDate(tx.getTransactionDate());
+        if (parsed != null) calendar.setTime(parsed);
+        tvTransactionDate.setText(DateUtils.toDisplayString(calendar.getTime()));
+
+        if (!TextUtils.isEmpty(tx.getReceiptUri())) {
+            receiptUri = tx.getReceiptUri();
+            showReceipt(Uri.parse(receiptUri));
+        }
+    }
+
+    private void showReceipt(Uri uri) {
+        imgReceiptPreview.setImageURI(uri);
+        layoutReceiptPlaceholder.setVisibility(View.GONE);
+        layoutReceiptPreview.setVisibility(View.VISIBLE);
+    }
+
+    private void saveTransaction() {
+        String raw = edtAmount.getText().toString().trim();
+        double amount;
+        try {
+            amount = Double.parseDouble(raw);
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "Vui lòng nhập số tiền hợp lệ!", Toast.LENGTH_SHORT).show();
+            edtAmount.requestFocus();
+            return;
+        }
+        if (amount <= 0 || selectedCategoryId == -1) {
+            Toast.makeText(this, "Số tiền phải > 0 và cần chọn danh mục!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String note = edtNote.getText().toString().trim();
+        String title = note;
+        if (title.isEmpty()) {
+            title = "Giao dịch";
+            for (Category c : categories) {
+                if (c.getCategoryId() == selectedCategoryId) {
+                    title = c.getName();
+                    break;
+                }
+            }
+        }
+
+        int userId = getSharedPreferences("SmartSpendPrefs", MODE_PRIVATE).getInt("user_id", 1);
+        if (userId <= 0) userId = 1;
+        String dbDate = DateUtils.toDbString(calendar.getTime());
+
+        boolean ok;
+        if (editingId != -1) {
+            ok = dao.updateTransaction(new Transaction(editingId, userId, selectedCategoryId, title, amount, dbDate, note, receiptUri)) > 0;
+        } else {
+            ok = dao.insertTransaction(new Transaction(userId, selectedCategoryId, title, amount, dbDate, note, receiptUri)) > 0;
+        }
+
+        Toast.makeText(this, ok ? "Lưu giao dịch thành công!" : "Lưu giao dịch thất bại!", Toast.LENGTH_SHORT).show();
+        if (ok) {
+            setResult(RESULT_OK);
+            finish();
+        }
+    }
+
+    private GradientDrawable roundedBg(String hex, int radiusDp) {
+        GradientDrawable gd = new GradientDrawable();
+        gd.setColor(Color.parseColor(hex));
+        gd.setCornerRadius(dp(radiusDp));
+        return gd;
+    }
+
+    private int dp(int v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
     }
 }
