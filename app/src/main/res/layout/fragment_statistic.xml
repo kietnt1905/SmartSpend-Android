@@ -15,39 +15,10 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- 1. Header Top Bar -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:letterSpacing="0.08"
-                android:text="SMARTSPEND"
-                android:textColor="#0A5C36"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvHeaderTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Thống Kê"
-                android:textColor="#0F172A"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- 2. Time Filter Segment Bar (Tháng / Năm) -->
+        <!-- 1. Time Filter Segment Bar (Tháng / Năm) -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
             app:cardBackgroundColor="#FFFFFF"
             app:cardCornerRadius="20dp"
             app:cardElevation="1dp">
