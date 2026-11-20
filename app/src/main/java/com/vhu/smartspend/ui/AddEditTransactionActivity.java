@@ -229,12 +229,13 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         item.setGravity(Gravity.CENTER_HORIZONTAL);
         item.setPadding(dp(4), dp(8), dp(4), dp(8));
         item.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-        item.setTag(cat.getCategoryId());
+        item.setTag(cat);
 
-        ImageView icon = new ImageView(this);
+        TextView icon = new TextView(this);
         icon.setLayoutParams(new LinearLayout.LayoutParams(dp(48), dp(48)));
-        icon.setPadding(dp(12), dp(12), dp(12), dp(12));
-        icon.setImageResource(getCategoryIcon(cat.getIconName()));
+        icon.setGravity(Gravity.CENTER);
+        icon.setText(getCategoryEmoji(cat.getIconName()));
+        icon.setTextSize(22f);
 
         TextView label = new TextView(this);
         label.setPadding(0, dp(6), 0, 0);
@@ -246,7 +247,7 @@ public class AddEditTransactionActivity extends AppCompatActivity {
 
         item.addView(icon);
         item.addView(label);
-        applyCategoryItemStyle(item, selected);
+        applyCategoryItemStyle(item, cat, selected);
 
         item.setOnTouchListener((v, event) -> {
             if (categories.size() > 8) {
@@ -263,16 +264,28 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         return item;
     }
 
-    private void applyCategoryItemStyle(LinearLayout item, boolean selected) {
-        item.setBackground(selected ? roundedBg("#E9F2FC", 14) : null);
+    private void applyCategoryItemStyle(LinearLayout item, Category cat, boolean selected) {
+        int borderColor = parseCategoryColor(cat.getColorCode());
+
+        if (selected) {
+            GradientDrawable selectedBox = new GradientDrawable();
+            selectedBox.setCornerRadius(dp(14));
+            selectedBox.setColor(Color.argb(26, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
+            selectedBox.setStroke(dp(2), borderColor);
+            item.setBackground(selectedBox);
+        } else {
+            item.setBackground(null);
+        }
 
         GradientDrawable circle = new GradientDrawable();
         circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(Color.parseColor(selected ? "#0A5C36" : "#EAF1FA"));
+        circle.setColor(selected
+                ? Color.argb(36, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor))
+                : Color.parseColor("#F8FAFC"));
+        circle.setStroke(dp(selected ? 3 : 2), borderColor);
 
-        ImageView icon = (ImageView) item.getChildAt(0);
+        TextView icon = (TextView) item.getChildAt(0);
         icon.setBackground(circle);
-        icon.setColorFilter(selected ? Color.WHITE : Color.parseColor("#1E293B"));
 
         TextView label = (TextView) item.getChildAt(1);
         label.setTextColor(Color.parseColor(selected ? "#0F172A" : "#334155"));
@@ -286,24 +299,48 @@ public class AddEditTransactionActivity extends AppCompatActivity {
             LinearLayout row = (LinearLayout) rowView;
             for (int c = 0; c < row.getChildCount(); c++) {
                 View child = row.getChildAt(c);
-                if (child instanceof LinearLayout && child.getTag() instanceof Integer) {
-                    int catId = (Integer) child.getTag();
-                    applyCategoryItemStyle((LinearLayout) child, catId == selectedCategoryId);
+                if (child instanceof LinearLayout && child.getTag() instanceof Category) {
+                    Category cat = (Category) child.getTag();
+                    applyCategoryItemStyle((LinearLayout) child, cat, cat.getCategoryId() == selectedCategoryId);
                 }
             }
         }
     }
 
-    private int getCategoryIcon(String iconName) {
-        if (iconName == null) return R.drawable.ic_tx_category_default;
+    private int parseCategoryColor(String colorCode) {
+        if (colorCode != null && !colorCode.trim().isEmpty()) {
+            try {
+                return Color.parseColor(colorCode.trim());
+            } catch (Exception ignored) {
+            }
+        }
+        return Color.parseColor("#0A5C36");
+    }
+
+    private String getCategoryEmoji(String iconName) {
+        if (iconName == null) return "⭐";
         switch (iconName.toLowerCase(Locale.getDefault())) {
-            case "ic_food": return R.drawable.ic_tx_food;
-            case "ic_school": return R.drawable.ic_tx_school;
-            case "ic_shopping": return R.drawable.ic_tx_shopping;
-            case "ic_transport": return R.drawable.ic_tx_transport;
-            case "ic_award": return R.drawable.ic_tx_award;
-            case "ic_work": return R.drawable.ic_tx_work;
-            default: return R.drawable.ic_tx_category_default;
+            case "ic_food": return "🍔";
+            case "ic_coffee": return "☕";
+            case "ic_school": return "📚";
+            case "ic_shopping": return "🛒";
+            case "ic_transport": return "🚗";
+            case "ic_home": return "🏠";
+            case "ic_bill": return "⚡";
+            case "ic_entertainment": return "🎮";
+            case "ic_health": return "💊";
+            case "ic_beauty": return "💄";
+            case "ic_travel": return "✈️";
+            case "ic_pet": return "🐾";
+            case "ic_sport": return "🏋️";
+            case "ic_phone": return "📱";
+            case "ic_gift": return "🎁";
+            case "ic_award": return "🎓";
+            case "ic_work": return "💼";
+            case "ic_savings": return "💰";
+            case "ic_invest": return "📈";
+            case "ic_other": return "⭐";
+            default: return "⭐";
         }
     }
 

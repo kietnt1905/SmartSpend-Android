@@ -65,13 +65,13 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <ImageView
-                        android:id="@+id/imgDetailCategoryIcon"
+                    <TextView
+                        android:id="@+id/tvDetailCategoryIcon"
                         android:layout_width="56dp"
                         android:layout_height="56dp"
-                        android:contentDescription="@null"
-                        android:padding="14dp"
-                        android:src="@drawable/ic_tx_category_default" />
+                        android:gravity="center"
+                        android:text="⭐"
+                        android:textSize="26sp" />
 
                     <TextView
                         android:id="@+id/tvDetailCategoryName"

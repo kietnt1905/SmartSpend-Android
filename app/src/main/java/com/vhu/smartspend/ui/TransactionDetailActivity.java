@@ -17,6 +17,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.database.TransactionDAO;
@@ -34,8 +35,8 @@ public class TransactionDetailActivity extends AppCompatActivity {
     private TransactionDAO dao;
     private int transactionId = -1;
 
-    private ImageView imgIcon, imgReceipt;
-    private TextView tvCategoryName, tvType, tvAmount, tvDate, tvNote;
+    private ImageView imgReceipt;
+    private TextView tvIcon, tvCategoryName, tvType, tvAmount, tvDate, tvNote;
     private View cardReceipt;
 
     @Override
@@ -43,6 +44,11 @@ public class TransactionDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         WindowCompat.enableEdgeToEdge(getWindow());
         setContentView(R.layout.activity_transaction_detail);
+
+        WindowInsetsControllerCompat insetsController =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        insetsController.setAppearanceLightStatusBars(true);
+        insetsController.setAppearanceLightNavigationBars(true);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -53,7 +59,7 @@ public class TransactionDetailActivity extends AppCompatActivity {
         dao = new TransactionDAO(this);
         transactionId = getIntent().getIntExtra(EXTRA_TRANSACTION_ID, -1);
 
-        imgIcon = findViewById(R.id.imgDetailCategoryIcon);
+        tvIcon = findViewById(R.id.tvDetailCategoryIcon);
         tvCategoryName = findViewById(R.id.tvDetailCategoryName);
         tvType = findViewById(R.id.tvDetailType);
         tvAmount = findViewById(R.id.tvDetailAmount);
@@ -86,13 +92,15 @@ public class TransactionDetailActivity extends AppCompatActivity {
         }
 
         boolean isIncome = Category.TYPE_INCOME.equalsIgnoreCase(tx.getCategoryType());
+        int borderColor = parseCategoryColor(tx.getCategoryColorCode(), isIncome ? "#0A5C36" : "#B91C1C");
+        float d = getResources().getDisplayMetrics().density;
 
         GradientDrawable circle = new GradientDrawable();
         circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(Color.parseColor(isIncome ? "#D1FAE5" : "#FFE4DE"));
-        imgIcon.setBackground(circle);
-        imgIcon.setImageResource(getCategoryIcon(tx.getCategoryIconName()));
-        imgIcon.setColorFilter(Color.parseColor(isIncome ? "#0A5C36" : "#B91C1C"));
+        circle.setColor(Color.argb(30, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
+        circle.setStroke(Math.round(3 * d), borderColor);
+        tvIcon.setBackground(circle);
+        tvIcon.setText(getCategoryEmoji(tx.getCategoryIconName()));
 
         tvCategoryName.setText(!TextUtils.isEmpty(tx.getCategoryName()) ? tx.getCategoryName() : tx.getTitle());
 
@@ -135,16 +143,40 @@ public class TransactionDetailActivity extends AppCompatActivity {
                 .show();
     }
 
-    private int getCategoryIcon(String iconName) {
-        if (iconName == null) return R.drawable.ic_tx_category_default;
+    private int parseCategoryColor(String colorCode, String fallbackHex) {
+        if (colorCode != null && !colorCode.trim().isEmpty()) {
+            try {
+                return Color.parseColor(colorCode.trim());
+            } catch (Exception ignored) {
+            }
+        }
+        return Color.parseColor(fallbackHex);
+    }
+
+    private String getCategoryEmoji(String iconName) {
+        if (iconName == null) return "⭐";
         switch (iconName.toLowerCase(Locale.getDefault())) {
-            case "ic_food": return R.drawable.ic_tx_food;
-            case "ic_school": return R.drawable.ic_tx_school;
-            case "ic_shopping": return R.drawable.ic_tx_shopping;
-            case "ic_transport": return R.drawable.ic_tx_transport;
-            case "ic_award": return R.drawable.ic_tx_award;
-            case "ic_work": return R.drawable.ic_tx_work;
-            default: return R.drawable.ic_tx_category_default;
+            case "ic_food": return "🍔";
+            case "ic_coffee": return "☕";
+            case "ic_school": return "📚";
+            case "ic_shopping": return "🛒";
+            case "ic_transport": return "🚗";
+            case "ic_home": return "🏠";
+            case "ic_bill": return "⚡";
+            case "ic_entertainment": return "🎮";
+            case "ic_health": return "💊";
+            case "ic_beauty": return "💄";
+            case "ic_travel": return "✈️";
+            case "ic_pet": return "🐾";
+            case "ic_sport": return "🏋️";
+            case "ic_phone": return "📱";
+            case "ic_gift": return "🎁";
+            case "ic_award": return "🎓";
+            case "ic_work": return "💼";
+            case "ic_savings": return "💰";
+            case "ic_invest": return "📈";
+            case "ic_other": return "⭐";
+            default: return "⭐";
         }
     }
 }
