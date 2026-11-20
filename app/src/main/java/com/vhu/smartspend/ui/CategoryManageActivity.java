@@ -52,7 +52,7 @@ public class CategoryManageActivity extends AppCompatActivity {
     private LinearLayout layoutIconPicker, layoutColorPicker;
     private RadioGroup rgCategoryType;
     private RadioButton rbExpense, rbIncome;
-    private Button btnAddCategory, btnUpdateCategory, btnDeleteCategory, btnClearCategory;
+    private Button btnSaveCategory, btnDeleteCategory;
     private GridView gvCategories;
 
     private final List<TextView> iconViews = new ArrayList<>();
@@ -99,17 +99,27 @@ public class CategoryManageActivity extends AppCompatActivity {
         setupIconPicker();
         setupColorPicker();
         refreshPickerSelection();
+        updateActionButtons();
         loadCategories();
 
         findViewById(R.id.btnBackCategory).setOnClickListener(v -> finish());
-        btnAddCategory.setOnClickListener(v -> addCategory());
-        btnUpdateCategory.setOnClickListener(v -> updateCategory());
+        btnSaveCategory.setOnClickListener(v -> {
+            if (selectedCategory == null) {
+                addCategory();
+            } else {
+                updateCategory();
+            }
+        });
         btnDeleteCategory.setOnClickListener(v -> deleteCategory());
-        btnClearCategory.setOnClickListener(v -> resetInputs());
 
         gvCategories.setOnItemClickListener((parent, view, position, id) -> {
-            selectedCategory = categoryList.get(position);
-            populateInputs(selectedCategory);
+            Category clicked = categoryList.get(position);
+            if (selectedCategory != null && selectedCategory.getCategoryId() == clicked.getCategoryId()) {
+                resetInputs();
+            } else {
+                selectedCategory = clicked;
+                populateInputs(selectedCategory);
+            }
         });
 
         gvCategories.setOnItemLongClickListener((parent, view, position, id) -> {
@@ -128,10 +138,8 @@ public class CategoryManageActivity extends AppCompatActivity {
         rgCategoryType = findViewById(R.id.rgCategoryType);
         rbExpense = findViewById(R.id.rbExpense);
         rbIncome = findViewById(R.id.rbIncome);
-        btnAddCategory = findViewById(R.id.btnAddCategory);
-        btnUpdateCategory = findViewById(R.id.btnUpdateCategory);
+        btnSaveCategory = findViewById(R.id.btnSaveCategory);
         btnDeleteCategory = findViewById(R.id.btnDeleteCategory);
-        btnClearCategory = findViewById(R.id.btnClearCategory);
         gvCategories = findViewById(R.id.gvCategories);
 
         categoryList = new ArrayList<>();
@@ -374,6 +382,7 @@ public class CategoryManageActivity extends AppCompatActivity {
         selectedColorHex = !TextUtils.isEmpty(cat.getColorCode()) ? cat.getColorCode() : SAMPLE_COLORS[0];
         gridAdapter.setSelectedCategoryId(cat.getCategoryId());
         refreshPickerSelection();
+        updateActionButtons();
     }
 
     private void resetInputs() {
@@ -385,5 +394,16 @@ public class CategoryManageActivity extends AppCompatActivity {
         selectedColorHex = SAMPLE_COLORS[0];
         gridAdapter.setSelectedCategoryId(-1);
         refreshPickerSelection();
+        updateActionButtons();
+    }
+
+    private void updateActionButtons() {
+        if (selectedCategory == null) {
+            btnSaveCategory.setText("Tạo");
+            btnDeleteCategory.setVisibility(View.GONE);
+        } else {
+            btnSaveCategory.setText("Lưu");
+            btnDeleteCategory.setVisibility(View.VISIBLE);
+        }
     }
 }
