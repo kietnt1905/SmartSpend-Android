@@ -4,7 +4,7 @@
         <item name="colorOnPrimary">@color/white</item>
         <item name="colorSecondary">@color/primary</item>
         <item name="colorSurface">@color/setting_card</item>
-        <item name="android:statusBarColor">@color/setting_card</item>
+        <item name="android:statusBarColor">@color/setting_bg</item>
         <item name="android:navigationBarColor">@color/setting_card</item>
     </style>
 

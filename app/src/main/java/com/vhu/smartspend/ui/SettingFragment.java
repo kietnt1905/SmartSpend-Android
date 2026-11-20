@@ -34,7 +34,7 @@ public class SettingFragment extends Fragment {
     private TextView tvUserFullName, tvUsername, tvUserRole, tvRoleBadge, tvMonthlyLimit;
     private SwitchCompat swDarkMode, swAuto503020;
     private View btnManageCategory, btnExportCsv, btnLogout;
-    private View rowMonthlyLimit, btnHeaderNotification;
+    private View rowMonthlyLimit;
 
     private SessionManager sessionManager;
     private DatabaseHelper dbHelper;
@@ -65,7 +65,6 @@ public class SettingFragment extends Fragment {
         rowMonthlyLimit = view.findViewById(R.id.rowMonthlyLimit);
         btnManageCategory = view.findViewById(R.id.btnManageCategory);
         btnExportCsv = view.findViewById(R.id.btnExportCsv);
-        btnHeaderNotification = view.findViewById(R.id.btnHeaderNotification);
         btnLogout = view.findViewById(R.id.btnLogout);
 
         bindUserInfo();
@@ -97,10 +96,6 @@ public class SettingFragment extends Fragment {
 
         btnExportCsv.setOnClickListener(v ->
                 CsvExporter.exportTransactionsToCsv(requireContext(), sessionManager.getUserId())
-        );
-
-        btnHeaderNotification.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Không có thông báo mới", Toast.LENGTH_SHORT).show()
         );
 
         btnLogout.setOnClickListener(v -> {

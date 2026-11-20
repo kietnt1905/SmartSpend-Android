@@ -5,55 +5,46 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/setting_card"
+    android:background="@color/setting_bg"
     android:orientation="vertical"
     tools:context=".ui.MainActivity">
-
-    <!-- Thanh tiêu đề trên gọn, đồng bộ tông xanh lá -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:background="@color/setting_card"
-        android:elevation="0dp"
-        app:contentInsetStart="16dp"
-        app:title="SmartSpend"
-        app:titleTextColor="@color/nav_active" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/setting_divider" />
 
     <!-- Container chứa Fragment -->
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="@color/setting_bg" />
+        android:layout_weight="1" />
 
-    <View
+    <!-- Thanh điều hướng dưới gọn gàng, liền mạch với thanh cử chỉ -->
+    <LinearLayout
+        android:id="@+id/bottomNavContainer"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/setting_divider" />
-
-    <!-- Thanh Menu Dưới cân đối, gọn gàng -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNavigation"
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="wrap_content"
         android:background="@color/setting_card"
-        app:elevation="0dp"
-        app:itemActiveIndicatorStyle="@style/SmartSpendBottomNavIndicator"
-        app:itemIconSize="22dp"
-        app:itemIconTint="@color/bottom_nav_color"
-        app:itemPaddingBottom="8dp"
-        app:itemPaddingTop="8dp"
-        app:itemTextAppearanceActive="@style/SmartSpendBottomNavTextActive"
-        app:itemTextAppearanceInactive="@style/SmartSpendBottomNavTextInactive"
-        app:itemTextColor="@color/bottom_nav_color"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/bottom_nav_menu" />
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/setting_divider" />
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNavigation"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:background="@color/setting_card"
+            app:elevation="0dp"
+            app:itemActiveIndicatorStyle="@style/SmartSpendBottomNavIndicator"
+            app:itemIconSize="22dp"
+            app:itemIconTint="@color/bottom_nav_color"
+            app:itemPaddingBottom="8dp"
+            app:itemPaddingTop="8dp"
+            app:itemTextAppearanceActive="@style/SmartSpendBottomNavTextActive"
+            app:itemTextAppearanceInactive="@style/SmartSpendBottomNavTextInactive"
+            app:itemTextColor="@color/bottom_nav_color"
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/bottom_nav_menu" />
+    </LinearLayout>
 
 </LinearLayout>

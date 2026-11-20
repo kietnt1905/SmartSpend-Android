@@ -15,107 +15,32 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- 1. Header Top Bar (Logo + SMARTSPEND / Cài Đặt + Bell & Avatar) -->
-        <RelativeLayout
+        <!-- 1. Header Top Bar -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
 
-            <LinearLayout
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:letterSpacing="0.08"
+                android:text="SMARTSPEND"
+                android:textColor="@color/nav_active"
+                android:textSize="11sp"
+                android:textStyle="bold" />
 
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    app:cardBackgroundColor="#E0F2F1"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="0dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="💳"
-                        android:textSize="20sp" />
-                </com.google.android.material.card.MaterialCardView>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:letterSpacing="0.05"
-                        android:text="SMARTSPEND"
-                        android:textColor="#0B5A4B"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="1dp"
-                        android:text="Cài Đặt"
-                        android:textColor="@color/setting_text_primary"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/btnHeaderNotification"
-                    android:layout_width="38dp"
-                    android:layout_height="38dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:cardBackgroundColor="@color/setting_pill_bg"
-                    app:cardCornerRadius="19dp"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="0dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="🔔"
-                        android:textSize="16sp" />
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:layout_marginStart="8dp"
-                    app:cardBackgroundColor="#0B5A4B"
-                    app:cardCornerRadius="18dp"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="0dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="👤"
-                        android:textColor="#FFFFFF"
-                        android:textSize="16sp" />
-                </com.google.android.material.card.MaterialCardView>
-            </LinearLayout>
-        </RelativeLayout>
+                android:layout_marginTop="2dp"
+                android:text="Tài Khoản &amp; Cài Đặt"
+                android:textColor="@color/setting_text_primary"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <!-- 2. Profile Card -->
         <com.google.android.material.card.MaterialCardView
