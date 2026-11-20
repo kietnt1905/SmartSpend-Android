@@ -15,7 +15,6 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +25,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.core.widget.NestedScrollView;
 
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.database.TransactionDAO;
@@ -46,7 +47,7 @@ public class AddEditTransactionActivity extends AppCompatActivity {
     private TextView tvScreenTitle, tabExpense, tabIncome, tvAmountLabel, tvAmountSign, tvTransactionDate, tvSaveButtonText;
     private EditText edtAmount, edtNote;
     private LinearLayout layoutCategoryGrid;
-    private ScrollView scrollCategoryGrid;
+    private NestedScrollView scrollCategoryGrid;
     private View layoutReceiptPlaceholder, layoutReceiptPreview;
     private ImageView imgReceiptPreview;
 
@@ -75,6 +76,11 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         WindowCompat.enableEdgeToEdge(getWindow());
         setContentView(R.layout.activity_add_edit_transaction);
 
+        WindowInsetsControllerCompat insetsController =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        insetsController.setAppearanceLightStatusBars(true);
+        insetsController.setAppearanceLightNavigationBars(true);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
@@ -94,7 +100,7 @@ public class AddEditTransactionActivity extends AppCompatActivity {
             if (categories.size() > 8) {
                 int action = event.getActionMasked();
                 boolean disallow = action != MotionEvent.ACTION_UP && action != MotionEvent.ACTION_CANCEL;
-                v.getParent().requestDisallowInterceptTouchEvent(disallow);
+                scrollCategoryGrid.getParent().requestDisallowInterceptTouchEvent(disallow);
             }
             return false;
         });
@@ -223,18 +229,12 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         item.setGravity(Gravity.CENTER_HORIZONTAL);
         item.setPadding(dp(4), dp(8), dp(4), dp(8));
         item.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-        item.setBackground(selected ? roundedBg("#E9F2FC", 14) : null);
-
-        GradientDrawable circle = new GradientDrawable();
-        circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(Color.parseColor(selected ? "#0A5C36" : "#EAF1FA"));
+        item.setTag(cat.getCategoryId());
 
         ImageView icon = new ImageView(this);
         icon.setLayoutParams(new LinearLayout.LayoutParams(dp(48), dp(48)));
         icon.setPadding(dp(12), dp(12), dp(12), dp(12));
-        icon.setBackground(circle);
         icon.setImageResource(getCategoryIcon(cat.getIconName()));
-        icon.setColorFilter(selected ? Color.WHITE : Color.parseColor("#1E293B"));
 
         TextView label = new TextView(this);
         label.setPadding(0, dp(6), 0, 0);
@@ -243,16 +243,55 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         label.setTextSize(12f);
         label.setMaxLines(1);
         label.setEllipsize(TextUtils.TruncateAt.END);
-        label.setTextColor(Color.parseColor(selected ? "#0F172A" : "#334155"));
-        label.setTypeface(null, selected ? Typeface.BOLD : Typeface.NORMAL);
 
         item.addView(icon);
         item.addView(label);
+        applyCategoryItemStyle(item, selected);
+
+        item.setOnTouchListener((v, event) -> {
+            if (categories.size() > 8) {
+                int action = event.getActionMasked();
+                boolean disallow = action != MotionEvent.ACTION_UP && action != MotionEvent.ACTION_CANCEL;
+                scrollCategoryGrid.getParent().requestDisallowInterceptTouchEvent(disallow);
+            }
+            return false;
+        });
         item.setOnClickListener(v -> {
             selectedCategoryId = cat.getCategoryId();
-            renderCategories();
+            updateCategorySelection();
         });
         return item;
+    }
+
+    private void applyCategoryItemStyle(LinearLayout item, boolean selected) {
+        item.setBackground(selected ? roundedBg("#E9F2FC", 14) : null);
+
+        GradientDrawable circle = new GradientDrawable();
+        circle.setShape(GradientDrawable.OVAL);
+        circle.setColor(Color.parseColor(selected ? "#0A5C36" : "#EAF1FA"));
+
+        ImageView icon = (ImageView) item.getChildAt(0);
+        icon.setBackground(circle);
+        icon.setColorFilter(selected ? Color.WHITE : Color.parseColor("#1E293B"));
+
+        TextView label = (TextView) item.getChildAt(1);
+        label.setTextColor(Color.parseColor(selected ? "#0F172A" : "#334155"));
+        label.setTypeface(null, selected ? Typeface.BOLD : Typeface.NORMAL);
+    }
+
+    private void updateCategorySelection() {
+        for (int r = 0; r < layoutCategoryGrid.getChildCount(); r++) {
+            View rowView = layoutCategoryGrid.getChildAt(r);
+            if (!(rowView instanceof LinearLayout)) continue;
+            LinearLayout row = (LinearLayout) rowView;
+            for (int c = 0; c < row.getChildCount(); c++) {
+                View child = row.getChildAt(c);
+                if (child instanceof LinearLayout && child.getTag() instanceof Integer) {
+                    int catId = (Integer) child.getTag();
+                    applyCategoryItemStyle((LinearLayout) child, catId == selectedCategoryId);
+                }
+            }
+        }
     }
 
     private int getCategoryIcon(String iconName) {
