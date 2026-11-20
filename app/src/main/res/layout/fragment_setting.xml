@@ -15,38 +15,10 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- 1. Header Top Bar -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:letterSpacing="0.08"
-                android:text="SMARTSPEND"
-                android:textColor="@color/nav_active"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Tài Khoản &amp; Cài Đặt"
-                android:textColor="@color/setting_text_primary"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- 2. Profile Card -->
+        <!-- 1. Profile Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
             app:cardBackgroundColor="@color/setting_card"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
