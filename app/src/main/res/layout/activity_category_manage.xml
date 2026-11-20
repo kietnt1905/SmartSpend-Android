@@ -3,13 +3,14 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA"
+    android:background="@color/setting_bg"
     android:orientation="vertical"
     android:padding="16dp">
 
+    <!-- Thanh tiêu đề -->
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="44dp"
         android:layout_marginBottom="12dp">
 
         <ImageButton
@@ -27,8 +28,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="QUẢN LÝ DANH MỤC THU / CHI"
-            android:textColor="#0A5C36"
+            android:text="Quản lý danh mục"
+            android:textColor="@color/nav_active"
             android:textSize="18sp"
             android:textStyle="bold" />
     </RelativeLayout>
@@ -38,7 +39,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="14dp"
-        android:background="#FFFFFF"
+        android:background="@color/setting_card"
         android:elevation="2dp"
         android:orientation="vertical"
         android:padding="14dp">
@@ -65,9 +66,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Tên danh mục (ví dụ: Ăn uống, Học phí...)"
-                android:inputType="text"
-                android:minHeight="48dp" />
+                android:hint="Nhập tên danh mục..."
+                android:importantForAutofill="no"
+                android:inputType="textCapSentences"
+                android:maxLines="1"
+                android:minHeight="48dp"
+                android:textColor="@color/setting_text_primary"
+                android:textColorHint="@color/setting_text_secondary"
+                android:textSize="15sp" />
         </LinearLayout>
 
         <RadioGroup
@@ -83,23 +89,25 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:checked="true"
-                android:text="Chi tiêu" />
+                android:text="Chi tiêu"
+                android:textColor="@color/setting_text_primary" />
 
             <RadioButton
                 android:id="@+id/rbIncome"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Thu nhập" />
+                android:text="Thu nhập"
+                android:textColor="@color/setting_text_primary" />
         </RadioGroup>
 
-        <!-- Chọn 6 icon mẫu -->
+        <!-- Chọn biểu tượng -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="6dp"
             android:text="Chọn biểu tượng:"
-            android:textColor="#424242"
+            android:textColor="@color/setting_text_secondary"
             android:textSize="13sp"
             android:textStyle="bold" />
 
@@ -117,7 +125,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="6dp"
             android:text="Chọn màu sắc:"
-            android:textColor="#424242"
+            android:textColor="@color/setting_text_secondary"
             android:textSize="13sp"
             android:textStyle="bold" />
 
@@ -135,7 +143,7 @@
                 android:orientation="horizontal" />
         </HorizontalScrollView>
 
-        <!-- Thao tác Thêm / Sửa / Xóa / Làm mới -->
+        <!-- Thao tác Thêm / Sửa / Xóa / Mới -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -155,7 +163,6 @@
                 android:minWidth="0dp"
                 android:paddingStart="4dp"
                 android:paddingEnd="4dp"
-                android:singleLine="true"
                 android:text="Thêm"
                 android:textColor="#FFFFFF"
                 android:textSize="13sp" />
@@ -173,7 +180,6 @@
                 android:minWidth="0dp"
                 android:paddingStart="4dp"
                 android:paddingEnd="4dp"
-                android:singleLine="true"
                 android:text="Sửa"
                 android:textColor="#FFFFFF"
                 android:textSize="13sp" />
@@ -191,7 +197,6 @@
                 android:minWidth="0dp"
                 android:paddingStart="4dp"
                 android:paddingEnd="4dp"
-                android:singleLine="true"
                 android:text="Xóa"
                 android:textColor="#FFFFFF"
                 android:textSize="13sp" />
@@ -208,7 +213,6 @@
                 android:minWidth="0dp"
                 android:paddingStart="4dp"
                 android:paddingEnd="4dp"
-                android:singleLine="true"
                 android:text="Mới"
                 android:textColor="#FFFFFF"
                 android:textSize="13sp" />
@@ -219,8 +223,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:text="Danh sách danh mục:"
-        android:textColor="#212121"
+        android:text="Danh sách danh mục (chạm để chọn):"
+        android:textColor="@color/setting_text_primary"
+        android:textSize="14sp"
         android:textStyle="bold" />
 
     <!-- GridView hiển thị danh sách danh mục -->
@@ -229,9 +234,11 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:clipToPadding="false"
         android:gravity="center"
         android:horizontalSpacing="8dp"
         android:numColumns="3"
+        android:paddingBottom="8dp"
         android:stretchMode="columnWidth"
         android:verticalSpacing="8dp" />
 

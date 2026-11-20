@@ -5,6 +5,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
@@ -16,6 +17,12 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.adapter.CategoryGridAdapter;
@@ -63,10 +70,30 @@ public class CategoryManageActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sessionManager = new SessionManager(this);
+
+        WindowCompat.enableEdgeToEdge(getWindow());
         setContentView(R.layout.activity_category_manage);
 
+        WindowInsetsControllerCompat insetsController =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        insetsController.setAppearanceLightStatusBars(!sessionManager.isDarkMode());
+        insetsController.setAppearanceLightNavigationBars(!sessionManager.isDarkMode());
+
+        View rootView = findViewById(R.id.main);
+        int basePad = dpToPx(16);
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(
+                    systemBars.left + basePad,
+                    systemBars.top + basePad,
+                    systemBars.right + basePad,
+                    systemBars.bottom + basePad
+            );
+            return insets;
+        });
+
         categoryDAO = new CategoryDAO(this);
-        sessionManager = new SessionManager(this);
 
         initViews();
         setupIconPicker();
@@ -87,6 +114,7 @@ public class CategoryManageActivity extends AppCompatActivity {
 
         gvCategories.setOnItemLongClickListener((parent, view, position, id) -> {
             selectedCategory = categoryList.get(position);
+            populateInputs(selectedCategory);
             showDeleteConfirmDialog(selectedCategory);
             return true;
         });
@@ -172,13 +200,19 @@ public class CategoryManageActivity extends AppCompatActivity {
     }
 
     private void refreshPickerSelection() {
+        int selectedBg = ContextCompat.getColor(this, R.color.nav_indicator);
+        int unselectedBg = ContextCompat.getColor(this, R.color.setting_pill_bg);
+        int selectedStroke = ContextCompat.getColor(this, R.color.nav_active);
+        int unselectedStroke = ContextCompat.getColor(this, R.color.setting_divider);
+        int colorCheckStroke = ContextCompat.getColor(this, R.color.setting_text_primary);
+
         // Highlight icon đang chọn
         for (int i = 0; i < SAMPLE_ICON_NAMES.length; i++) {
             boolean isSelected = SAMPLE_ICON_NAMES[i].equalsIgnoreCase(selectedIconName);
             GradientDrawable bg = new GradientDrawable();
             bg.setCornerRadius(dpToPx(10));
-            bg.setColor(isSelected ? Color.parseColor("#E8F5E9") : Color.parseColor("#F5F5F5"));
-            bg.setStroke(dpToPx(isSelected ? 2 : 1), Color.parseColor(isSelected ? "#0A5C36" : "#E0E0E0"));
+            bg.setColor(isSelected ? selectedBg : unselectedBg);
+            bg.setStroke(dpToPx(isSelected ? 2 : 1), isSelected ? selectedStroke : unselectedStroke);
             iconViews.get(i).setBackground(bg);
         }
 
@@ -190,10 +224,10 @@ public class CategoryManageActivity extends AppCompatActivity {
             circle.setShape(GradientDrawable.OVAL);
             circle.setColor(Color.parseColor(SAMPLE_COLORS[i]));
             if (isSelected) {
-                circle.setStroke(dpToPx(3), Color.parseColor("#212121"));
+                circle.setStroke(dpToPx(3), colorCheckStroke);
                 tv.setText("✓");
             } else {
-                circle.setStroke(dpToPx(1), Color.parseColor("#E0E0E0"));
+                circle.setStroke(dpToPx(1), unselectedStroke);
                 tv.setText("");
             }
             tv.setBackground(circle);
@@ -239,6 +273,11 @@ public class CategoryManageActivity extends AppCompatActivity {
         }
 
         String type = rbIncome.isChecked() ? Category.TYPE_INCOME : Category.TYPE_EXPENSE;
+        if (categoryDAO.existsCategoryName(name, type, -1)) {
+            edtCategoryName.setError("Danh mục này đã tồn tại");
+            return;
+        }
+
         Category cat = new Category(name, type, selectedIconName, selectedColorHex);
         long result = categoryDAO.insertCategory(cat);
         if (result > 0) {
@@ -263,6 +302,11 @@ public class CategoryManageActivity extends AppCompatActivity {
         }
 
         String type = rbIncome.isChecked() ? Category.TYPE_INCOME : Category.TYPE_EXPENSE;
+        if (categoryDAO.existsCategoryName(name, type, selectedCategory.getCategoryId())) {
+            edtCategoryName.setError("Danh mục này đã tồn tại");
+            return;
+        }
+
         selectedCategory.setName(name);
         selectedCategory.setType(type);
         selectedCategory.setIconName(selectedIconName);
@@ -295,6 +339,10 @@ public class CategoryManageActivity extends AppCompatActivity {
             Toast.makeText(this, "Chỉ tài khoản ADMIN mới có quyền xóa danh mục!", Toast.LENGTH_LONG).show();
             return;
         }
+        if (categoryDAO.isCategoryInUse(cat.getCategoryId())) {
+            Toast.makeText(this, "Không thể xóa danh mục đang có giao dịch!", Toast.LENGTH_LONG).show();
+            return;
+        }
         new AlertDialog.Builder(this)
                 .setTitle("Xác nhận xóa")
                 .setMessage("Bạn có chắc chắn muốn xóa danh mục '" + cat.getName() + "'?")
@@ -304,6 +352,8 @@ public class CategoryManageActivity extends AppCompatActivity {
                         Toast.makeText(this, "Đã xóa danh mục thành công!", Toast.LENGTH_SHORT).show();
                         loadCategories();
                         resetInputs();
+                    } else if (rows == -1) {
+                        Toast.makeText(this, "Không thể xóa danh mục đang có giao dịch!", Toast.LENGTH_LONG).show();
                     } else {
                         Toast.makeText(this, "Xóa thất bại!", Toast.LENGTH_SHORT).show();
                     }
@@ -313,6 +363,7 @@ public class CategoryManageActivity extends AppCompatActivity {
     }
 
     private void populateInputs(Category cat) {
+        edtCategoryName.setError(null);
         edtCategoryName.setText(cat.getName());
         if (Category.TYPE_INCOME.equalsIgnoreCase(cat.getType())) {
             rbIncome.setChecked(true);
@@ -321,15 +372,18 @@ public class CategoryManageActivity extends AppCompatActivity {
         }
         selectedIconName = !TextUtils.isEmpty(cat.getIconName()) ? cat.getIconName() : SAMPLE_ICON_NAMES[0];
         selectedColorHex = !TextUtils.isEmpty(cat.getColorCode()) ? cat.getColorCode() : SAMPLE_COLORS[0];
+        gridAdapter.setSelectedCategoryId(cat.getCategoryId());
         refreshPickerSelection();
     }
 
     private void resetInputs() {
         selectedCategory = null;
+        edtCategoryName.setError(null);
         edtCategoryName.setText("");
         rbExpense.setChecked(true);
         selectedIconName = SAMPLE_ICON_NAMES[0];
         selectedColorHex = SAMPLE_COLORS[0];
+        gridAdapter.setSelectedCategoryId(-1);
         refreshPickerSelection();
     }
 }

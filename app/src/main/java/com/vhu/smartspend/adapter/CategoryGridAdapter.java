@@ -3,6 +3,7 @@ package com.vhu.smartspend.adapter;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,9 @@ import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.core.content.ContextCompat;
+
+import com.vhu.smartspend.R;
 import com.vhu.smartspend.model.Category;
 
 import java.util.List;
@@ -17,6 +21,7 @@ import java.util.List;
 public class CategoryGridAdapter extends BaseAdapter {
     private final Context context;
     private List<Category> categoryList;
+    private int selectedCategoryId = -1;
 
     public CategoryGridAdapter(Context context, List<Category> categoryList) {
         this.context = context;
@@ -25,6 +30,11 @@ public class CategoryGridAdapter extends BaseAdapter {
 
     public void updateData(List<Category> newList) {
         this.categoryList = newList;
+        notifyDataSetChanged();
+    }
+
+    public void setSelectedCategoryId(int categoryId) {
+        this.selectedCategoryId = categoryId;
         notifyDataSetChanged();
     }
 
@@ -66,8 +76,8 @@ public class CategoryGridAdapter extends BaseAdapter {
             TextView tvName = new TextView(context);
             tvName.setGravity(Gravity.CENTER);
             tvName.setTextSize(14);
-            tvName.setTextColor(Color.BLACK);
             tvName.setMaxLines(1);
+            tvName.setEllipsize(TextUtils.TruncateAt.END);
 
             TextView tvType = new TextView(context);
             tvType.setGravity(Gravity.CENTER);
@@ -93,6 +103,7 @@ public class CategoryGridAdapter extends BaseAdapter {
         Category category = categoryList.get(position);
         if (category != null) {
             holder.tvName.setText(category.getName());
+            holder.tvName.setTextColor(ContextCompat.getColor(context, R.color.setting_text_primary));
 
             int bgColor = Color.parseColor("#0A5C36");
             if (category.getColorCode() != null && !category.getColorCode().trim().isEmpty()) {
@@ -109,10 +120,17 @@ public class CategoryGridAdapter extends BaseAdapter {
 
             holder.tvIconCircle.setText(getIconSymbol(category.getIconName(), category.getName()));
 
+            boolean isSelected = category.getCategoryId() == selectedCategoryId;
             GradientDrawable cardDrawable = new GradientDrawable();
             cardDrawable.setCornerRadius(dpToPx(12));
-            cardDrawable.setColor(Color.WHITE);
-            cardDrawable.setStroke(dpToPx(1), Color.parseColor("#E0E0E0"));
+            cardDrawable.setColor(ContextCompat.getColor(
+                    context,
+                    isSelected ? R.color.nav_indicator : R.color.setting_card
+            ));
+            cardDrawable.setStroke(
+                    dpToPx(isSelected ? 2 : 1),
+                    ContextCompat.getColor(context, isSelected ? R.color.nav_active : R.color.setting_divider)
+            );
             holder.root.setBackground(cardDrawable);
 
             if (Category.TYPE_INCOME.equalsIgnoreCase(category.getType())) {
@@ -120,7 +138,7 @@ public class CategoryGridAdapter extends BaseAdapter {
                 holder.tvType.setTextColor(Color.parseColor("#2E7D32"));
             } else {
                 holder.tvType.setText("Chi tiêu");
-                holder.tvType.setTextColor(Color.parseColor("#C62828"));
+                holder.tvType.setTextColor(Color.parseColor("#DC2626"));
             }
         }
 
