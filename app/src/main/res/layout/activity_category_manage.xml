@@ -101,7 +101,7 @@
                 android:textColor="@color/setting_text_primary" />
         </RadioGroup>
 
-        <!-- Chọn biểu tượng -->
+        <!-- Chọn biểu tượng (20 icon mẫu) -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -111,20 +111,25 @@
             android:textSize="13sp"
             android:textStyle="bold" />
 
-        <LinearLayout
-            android:id="@+id/layoutIconPicker"
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
-            android:gravity="center"
-            android:orientation="horizontal" />
+            android:scrollbars="none">
 
-        <!-- Chọn màu sắc -->
+            <LinearLayout
+                android:id="@+id/layoutIconPicker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </HorizontalScrollView>
+
+        <!-- Chọn màu viền -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="6dp"
-            android:text="Chọn màu sắc:"
+            android:text="Chọn màu viền:"
             android:textColor="@color/setting_text_secondary"
             android:textSize="13sp"
             android:textStyle="bold" />

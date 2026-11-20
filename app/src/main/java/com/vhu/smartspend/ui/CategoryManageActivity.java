@@ -36,10 +36,16 @@ import java.util.List;
 public class CategoryManageActivity extends AppCompatActivity {
 
     private static final String[] SAMPLE_ICON_NAMES = {
-            "ic_food", "ic_school", "ic_shopping", "ic_transport", "ic_award", "ic_work"
+            "ic_food", "ic_coffee", "ic_school", "ic_shopping", "ic_transport",
+            "ic_home", "ic_bill", "ic_entertainment", "ic_health", "ic_beauty",
+            "ic_travel", "ic_pet", "ic_sport", "ic_phone", "ic_gift",
+            "ic_award", "ic_work", "ic_savings", "ic_invest", "ic_other"
     };
     private static final String[] SAMPLE_ICON_EMOJIS = {
-            "🍔", "📚", "🛒", "🚗", "🎓", "💼"
+            "🍔", "☕", "📚", "🛒", "🚗",
+            "🏠", "⚡", "🎮", "💊", "💄",
+            "✈️", "🐾", "🏋️", "📱", "🎁",
+            "🎓", "💼", "💰", "📈", "⭐"
     };
     private static final String[] SAMPLE_COLORS = {
             "#0A5C36", "#FF5722", "#2196F3", "#9C27B0",
@@ -151,29 +157,45 @@ public class CategoryManageActivity extends AppCompatActivity {
         layoutIconPicker.removeAllViews();
         iconViews.clear();
 
-        int heightPx = dpToPx(42);
-        int marginPx = dpToPx(4);
+        int sizePx = dpToPx(42);
+        int gapPx = dpToPx(6);
+        int perRow = 10;
 
-        for (int i = 0; i < SAMPLE_ICON_NAMES.length; i++) {
-            final String iconName = SAMPLE_ICON_NAMES[i];
-            TextView tv = new TextView(this);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, heightPx, 1f);
-            if (i < SAMPLE_ICON_NAMES.length - 1) {
-                params.setMarginEnd(marginPx);
+        for (int rowStart = 0; rowStart < SAMPLE_ICON_NAMES.length; rowStart += perRow) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            if (rowStart > 0) {
+                rowParams.topMargin = gapPx;
             }
-            tv.setLayoutParams(params);
-            tv.setGravity(Gravity.CENTER);
-            tv.setText(SAMPLE_ICON_EMOJIS[i]);
-            tv.setTextSize(19f);
-            tv.setClickable(true);
-            tv.setFocusable(true);
-            tv.setOnClickListener(v -> {
-                selectedIconName = iconName;
-                refreshPickerSelection();
-            });
+            row.setLayoutParams(rowParams);
 
-            iconViews.add(tv);
-            layoutIconPicker.addView(tv);
+            int rowEnd = Math.min(rowStart + perRow, SAMPLE_ICON_NAMES.length);
+            for (int i = rowStart; i < rowEnd; i++) {
+                final String iconName = SAMPLE_ICON_NAMES[i];
+                TextView tv = new TextView(this);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(sizePx, sizePx);
+                if (i < rowEnd - 1) {
+                    params.setMarginEnd(gapPx);
+                }
+                tv.setLayoutParams(params);
+                tv.setGravity(Gravity.CENTER);
+                tv.setText(SAMPLE_ICON_EMOJIS[i]);
+                tv.setTextSize(19f);
+                tv.setClickable(true);
+                tv.setFocusable(true);
+                tv.setOnClickListener(v -> {
+                    selectedIconName = iconName;
+                    refreshPickerSelection();
+                });
+
+                iconViews.add(tv);
+                row.addView(tv);
+            }
+            layoutIconPicker.addView(row);
         }
     }
 
@@ -210,9 +232,15 @@ public class CategoryManageActivity extends AppCompatActivity {
     private void refreshPickerSelection() {
         int selectedBg = ContextCompat.getColor(this, R.color.nav_indicator);
         int unselectedBg = ContextCompat.getColor(this, R.color.setting_pill_bg);
-        int selectedStroke = ContextCompat.getColor(this, R.color.nav_active);
         int unselectedStroke = ContextCompat.getColor(this, R.color.setting_divider);
         int colorCheckStroke = ContextCompat.getColor(this, R.color.setting_text_primary);
+
+        int borderColor;
+        try {
+            borderColor = Color.parseColor(selectedColorHex);
+        } catch (Exception e) {
+            borderColor = Color.parseColor("#0A5C36");
+        }
 
         // Highlight icon đang chọn
         for (int i = 0; i < SAMPLE_ICON_NAMES.length; i++) {
@@ -220,7 +248,7 @@ public class CategoryManageActivity extends AppCompatActivity {
             GradientDrawable bg = new GradientDrawable();
             bg.setCornerRadius(dpToPx(10));
             bg.setColor(isSelected ? selectedBg : unselectedBg);
-            bg.setStroke(dpToPx(isSelected ? 2 : 1), isSelected ? selectedStroke : unselectedStroke);
+            bg.setStroke(dpToPx(isSelected ? 2 : 1), isSelected ? borderColor : unselectedStroke);
             iconViews.get(i).setBackground(bg);
         }
 
@@ -241,15 +269,12 @@ public class CategoryManageActivity extends AppCompatActivity {
             tv.setBackground(circle);
         }
 
-        // Cập nhật vòng tròn xem trước
+        // Cập nhật vòng tròn xem trước (dùng màu đã chọn làm viền)
         tvCategoryPreview.setText(getEmojiByIconName(selectedIconName));
         GradientDrawable previewBg = new GradientDrawable();
         previewBg.setShape(GradientDrawable.OVAL);
-        try {
-            previewBg.setColor(Color.parseColor(selectedColorHex));
-        } catch (Exception e) {
-            previewBg.setColor(Color.parseColor("#0A5C36"));
-        }
+        previewBg.setColor(unselectedBg);
+        previewBg.setStroke(dpToPx(3), borderColor);
         tvCategoryPreview.setBackground(previewBg);
     }
 

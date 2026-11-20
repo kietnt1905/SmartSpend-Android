@@ -70,7 +70,7 @@ public class CategoryGridAdapter extends BaseAdapter {
             circleParams.bottomMargin = dpToPx(8);
             tvIconCircle.setLayoutParams(circleParams);
             tvIconCircle.setGravity(Gravity.CENTER);
-            tvIconCircle.setTextColor(Color.WHITE);
+            tvIconCircle.setTextColor(ContextCompat.getColor(context, R.color.setting_text_primary));
             tvIconCircle.setTextSize(20);
 
             TextView tvName = new TextView(context);
@@ -105,17 +105,18 @@ public class CategoryGridAdapter extends BaseAdapter {
             holder.tvName.setText(category.getName());
             holder.tvName.setTextColor(ContextCompat.getColor(context, R.color.setting_text_primary));
 
-            int bgColor = Color.parseColor("#0A5C36");
+            int borderColor = Color.parseColor("#0A5C36");
             if (category.getColorCode() != null && !category.getColorCode().trim().isEmpty()) {
                 try {
-                    bgColor = Color.parseColor(category.getColorCode());
+                    borderColor = Color.parseColor(category.getColorCode());
                 } catch (Exception ignored) {
                 }
             }
 
             GradientDrawable circleDrawable = new GradientDrawable();
             circleDrawable.setShape(GradientDrawable.OVAL);
-            circleDrawable.setColor(bgColor);
+            circleDrawable.setColor(ContextCompat.getColor(context, R.color.setting_pill_bg));
+            circleDrawable.setStroke(dpToPx(2), borderColor);
             holder.tvIconCircle.setBackground(circleDrawable);
 
             holder.tvIconCircle.setText(getIconSymbol(category.getIconName(), category.getName()));
@@ -127,10 +128,7 @@ public class CategoryGridAdapter extends BaseAdapter {
                     context,
                     isSelected ? R.color.nav_indicator : R.color.setting_card
             ));
-            cardDrawable.setStroke(
-                    dpToPx(isSelected ? 2 : 1),
-                    ContextCompat.getColor(context, isSelected ? R.color.nav_active : R.color.setting_divider)
-            );
+            cardDrawable.setStroke(dpToPx(isSelected ? 3 : 2), borderColor);
             holder.root.setBackground(cardDrawable);
 
             if (Category.TYPE_INCOME.equalsIgnoreCase(category.getType())) {
@@ -150,22 +148,50 @@ public class CategoryGridAdapter extends BaseAdapter {
             switch (iconName.toLowerCase()) {
                 case "ic_food":
                     return "🍔";
+                case "ic_coffee":
+                    return "☕";
                 case "ic_school":
                     return "📚";
                 case "ic_shopping":
                     return "🛒";
                 case "ic_transport":
                     return "🚗";
+                case "ic_home":
+                    return "🏠";
+                case "ic_bill":
+                    return "⚡";
+                case "ic_entertainment":
+                    return "🎮";
+                case "ic_health":
+                    return "💊";
+                case "ic_beauty":
+                    return "💄";
+                case "ic_travel":
+                    return "✈️";
+                case "ic_pet":
+                    return "🐾";
+                case "ic_sport":
+                    return "🏋️";
+                case "ic_phone":
+                    return "📱";
+                case "ic_gift":
+                    return "🎁";
                 case "ic_award":
                     return "🎓";
                 case "ic_work":
                     return "💼";
+                case "ic_savings":
+                    return "💰";
+                case "ic_invest":
+                    return "📈";
+                case "ic_other":
+                    return "⭐";
             }
         }
         if (categoryName != null && !categoryName.trim().isEmpty()) {
             return categoryName.trim().substring(0, 1).toUpperCase();
         }
-        return "★";
+        return "⭐";
     }
 
     private int dpToPx(int dp) {
