@@ -79,14 +79,6 @@ public class TransactionDetailActivity extends AppCompatActivity {
 
     private void loadTransaction() {
         Transaction tx = dao.getTransactionById(transactionId);
-        if (tx == null && transactionId == -1) {
-            int userId = getSharedPreferences("SmartSpendPrefs", MODE_PRIVATE).getInt("user_id", 1);
-            java.util.List<Transaction> list = dao.getTransactionsByUser(userId > 0 ? userId : 1);
-            if (!list.isEmpty()) {
-                tx = list.get(0);
-                transactionId = tx.getTransactionId();
-            }
-        }
         if (tx == null) {
             Toast.makeText(this, "Không tìm thấy giao dịch", Toast.LENGTH_SHORT).show();
             finish();
