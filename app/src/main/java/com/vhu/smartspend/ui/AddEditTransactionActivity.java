@@ -9,10 +9,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,6 +46,7 @@ public class AddEditTransactionActivity extends AppCompatActivity {
     private TextView tvScreenTitle, tabExpense, tabIncome, tvAmountLabel, tvAmountSign, tvTransactionDate, tvSaveButtonText;
     private EditText edtAmount, edtNote;
     private LinearLayout layoutCategoryGrid;
+    private ScrollView scrollCategoryGrid;
     private View layoutReceiptPlaceholder, layoutReceiptPreview;
     private ImageView imgReceiptPreview;
 
@@ -85,6 +89,15 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         tvAmountSign = findViewById(R.id.tvAmountSign);
         edtAmount = findViewById(R.id.edtAmount);
         layoutCategoryGrid = findViewById(R.id.layoutCategoryGrid);
+        scrollCategoryGrid = findViewById(R.id.scrollCategoryGrid);
+        scrollCategoryGrid.setOnTouchListener((v, event) -> {
+            if (categories.size() > 8) {
+                int action = event.getActionMasked();
+                boolean disallow = action != MotionEvent.ACTION_UP && action != MotionEvent.ACTION_CANCEL;
+                v.getParent().requestDisallowInterceptTouchEvent(disallow);
+            }
+            return false;
+        });
         tvTransactionDate = findViewById(R.id.tvTransactionDate);
         edtNote = findViewById(R.id.edtNote);
         layoutReceiptPlaceholder = findViewById(R.id.layoutReceiptPlaceholder);
@@ -128,6 +141,7 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         currentType = type;
         selectedCategoryId = -1;
         updateTypeUi();
+        scrollCategoryGrid.scrollTo(0, 0);
         loadCategories();
     }
 
@@ -174,6 +188,30 @@ public class AddEditTransactionActivity extends AppCompatActivity {
                 }
             }
             layoutCategoryGrid.addView(row);
+        }
+
+        if (categories.size() > 8 && layoutCategoryGrid.getChildCount() >= 2) {
+            scrollCategoryGrid.setScrollbarFadingEnabled(false);
+            layoutCategoryGrid.post(() -> {
+                if (layoutCategoryGrid.getChildCount() >= 2) {
+                    int twoRowsHeight = layoutCategoryGrid.getChildAt(0).getHeight()
+                            + layoutCategoryGrid.getChildAt(1).getHeight();
+                    if (twoRowsHeight > 0) {
+                        ViewGroup.LayoutParams lp = scrollCategoryGrid.getLayoutParams();
+                        if (lp.height != twoRowsHeight) {
+                            lp.height = twoRowsHeight;
+                            scrollCategoryGrid.setLayoutParams(lp);
+                        }
+                    }
+                }
+            });
+        } else {
+            scrollCategoryGrid.setScrollbarFadingEnabled(true);
+            ViewGroup.LayoutParams lp = scrollCategoryGrid.getLayoutParams();
+            if (lp.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
+                lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                scrollCategoryGrid.setLayoutParams(lp);
+            }
         }
     }
 
