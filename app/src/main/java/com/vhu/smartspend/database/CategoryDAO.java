@@ -3,6 +3,7 @@ package com.vhu.smartspend.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.vhu.smartspend.model.Category;
@@ -45,11 +46,53 @@ public class CategoryDAO {
     }
 
     /**
-     * Xóa danh mục theo ID
+     * Kiểm tra tên danh mục đã tồn tại trong cùng loại Thu/Chi chưa
+     */
+    public boolean existsCategoryName(String name, String type, int excludeCategoryId) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT COUNT(*) FROM categories WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) AND type = ? AND category_id != ?",
+                new String[]{name, type, String.valueOf(excludeCategoryId)}
+        );
+        boolean exists = false;
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                exists = cursor.getInt(0) > 0;
+            }
+            cursor.close();
+        }
+        return exists;
+    }
+
+    /**
+     * Kiểm tra danh mục có đang được sử dụng trong bảng giao dịch không
+     */
+    public boolean isCategoryInUse(int categoryId) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT COUNT(*) FROM transactions WHERE category_id = ?",
+                new String[]{String.valueOf(categoryId)}
+        );
+        boolean inUse = false;
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                inUse = cursor.getInt(0) > 0;
+            }
+            cursor.close();
+        }
+        return inUse;
+    }
+
+    /**
+     * Xóa danh mục theo ID (trả về -1 nếu bị ràng buộc khóa ngoại)
      */
     public int deleteCategory(int categoryId) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
-        return db.delete("categories", "category_id = ?", new String[]{String.valueOf(categoryId)});
+        try {
+            return db.delete("categories", "category_id = ?", new String[]{String.valueOf(categoryId)});
+        } catch (SQLiteConstraintException e) {
+            return -1;
+        }
     }
 
     /**

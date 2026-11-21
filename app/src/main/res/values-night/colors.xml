@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="setting_bg">#121212</color>
-    <color name="setting_card">#1E1E1E</color>
-    <color name="setting_text_primary">#F1F5F9</color>
-    <color name="setting_text_secondary">#94A3B8</color>
-    <color name="setting_divider">#2C2C2C</color>
-    <color name="setting_pill_bg">#2A2A2A</color>
-</resources>

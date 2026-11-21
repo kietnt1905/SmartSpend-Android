@@ -16,7 +16,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 
@@ -32,9 +31,9 @@ import java.util.Locale;
 public class SettingFragment extends Fragment {
 
     private TextView tvUserFullName, tvUsername, tvUserRole, tvRoleBadge, tvMonthlyLimit;
-    private SwitchCompat swDarkMode, swAuto503020;
+    private SwitchCompat swAuto503020;
     private View btnManageCategory, btnExportCsv, btnLogout;
-    private View rowMonthlyLimit, btnHeaderNotification;
+    private View rowMonthlyLimit;
 
     private SessionManager sessionManager;
     private DatabaseHelper dbHelper;
@@ -59,28 +58,15 @@ public class SettingFragment extends Fragment {
         tvRoleBadge = view.findViewById(R.id.tvRoleBadge);
         tvMonthlyLimit = view.findViewById(R.id.tvMonthlyLimit);
 
-        swDarkMode = view.findViewById(R.id.swDarkMode);
         swAuto503020 = view.findViewById(R.id.swAuto503020);
 
         rowMonthlyLimit = view.findViewById(R.id.rowMonthlyLimit);
         btnManageCategory = view.findViewById(R.id.btnManageCategory);
         btnExportCsv = view.findViewById(R.id.btnExportCsv);
-        btnHeaderNotification = view.findViewById(R.id.btnHeaderNotification);
         btnLogout = view.findViewById(R.id.btnLogout);
 
         bindUserInfo();
         loadMonthlyLimit();
-
-        // Dark Mode switch
-        swDarkMode.setChecked(sessionManager.isDarkMode());
-        swDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked != sessionManager.isDarkMode()) {
-                sessionManager.setDarkMode(isChecked);
-                AppCompatDelegate.setDefaultNightMode(
-                        isChecked ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
-                );
-            }
-        });
 
         swAuto503020.setOnCheckedChangeListener((buttonView, isChecked) ->
                 Toast.makeText(requireContext(),
@@ -97,10 +83,6 @@ public class SettingFragment extends Fragment {
 
         btnExportCsv.setOnClickListener(v ->
                 CsvExporter.exportTransactionsToCsv(requireContext(), sessionManager.getUserId())
-        );
-
-        btnHeaderNotification.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Không có thông báo mới", Toast.LENGTH_SHORT).show()
         );
 
         btnLogout.setOnClickListener(v -> {
@@ -122,7 +104,7 @@ public class SettingFragment extends Fragment {
         tvUserFullName.setText(!fullName.isEmpty() ? fullName : "Người dùng");
         tvUsername.setText(!username.isEmpty() ? "@" + username : "@smartspend");
         tvUserRole.setText("Quyền hạn: " + role);
-        tvRoleBadge.setText("✦ TÀI KHOẢN " + role.toUpperCase(Locale.getDefault()));
+        tvRoleBadge.setText("TÀI KHOẢN " + role.toUpperCase(Locale.getDefault()));
     }
 
     private void loadMonthlyLimit() {

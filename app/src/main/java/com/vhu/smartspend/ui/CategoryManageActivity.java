@@ -5,6 +5,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
@@ -16,6 +17,12 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.adapter.CategoryGridAdapter;
@@ -29,10 +36,16 @@ import java.util.List;
 public class CategoryManageActivity extends AppCompatActivity {
 
     private static final String[] SAMPLE_ICON_NAMES = {
-            "ic_food", "ic_school", "ic_shopping", "ic_transport", "ic_award", "ic_work"
+            "ic_food", "ic_coffee", "ic_school", "ic_shopping", "ic_transport",
+            "ic_home", "ic_bill", "ic_entertainment", "ic_health", "ic_beauty",
+            "ic_travel", "ic_pet", "ic_sport", "ic_phone", "ic_gift",
+            "ic_award", "ic_work", "ic_savings", "ic_invest", "ic_other"
     };
     private static final String[] SAMPLE_ICON_EMOJIS = {
-            "🍔", "📚", "🛒", "🚗", "🎓", "💼"
+            "🍔", "☕", "📚", "🛒", "🚗",
+            "🏠", "⚡", "🎮", "💊", "💄",
+            "✈️", "🐾", "🏋️", "📱", "🎁",
+            "🎓", "💼", "💰", "📈", "⭐"
     };
     private static final String[] SAMPLE_COLORS = {
             "#0A5C36", "#FF5722", "#2196F3", "#9C27B0",
@@ -45,7 +58,7 @@ public class CategoryManageActivity extends AppCompatActivity {
     private LinearLayout layoutIconPicker, layoutColorPicker;
     private RadioGroup rgCategoryType;
     private RadioButton rbExpense, rbIncome;
-    private Button btnAddCategory, btnUpdateCategory, btnDeleteCategory, btnClearCategory;
+    private Button btnSaveCategory, btnDeleteCategory;
     private GridView gvCategories;
 
     private final List<TextView> iconViews = new ArrayList<>();
@@ -63,30 +76,61 @@ public class CategoryManageActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sessionManager = new SessionManager(this);
+
+        WindowCompat.enableEdgeToEdge(getWindow());
         setContentView(R.layout.activity_category_manage);
 
+        WindowInsetsControllerCompat insetsController =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        insetsController.setAppearanceLightStatusBars(true);
+        insetsController.setAppearanceLightNavigationBars(true);
+
+        View rootView = findViewById(R.id.main);
+        int basePad = dpToPx(16);
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(
+                    systemBars.left + basePad,
+                    systemBars.top + basePad,
+                    systemBars.right + basePad,
+                    systemBars.bottom + basePad
+            );
+            return insets;
+        });
+
         categoryDAO = new CategoryDAO(this);
-        sessionManager = new SessionManager(this);
 
         initViews();
         setupIconPicker();
         setupColorPicker();
         refreshPickerSelection();
+        updateActionButtons();
         loadCategories();
 
         findViewById(R.id.btnBackCategory).setOnClickListener(v -> finish());
-        btnAddCategory.setOnClickListener(v -> addCategory());
-        btnUpdateCategory.setOnClickListener(v -> updateCategory());
+        btnSaveCategory.setOnClickListener(v -> {
+            if (selectedCategory == null) {
+                addCategory();
+            } else {
+                updateCategory();
+            }
+        });
         btnDeleteCategory.setOnClickListener(v -> deleteCategory());
-        btnClearCategory.setOnClickListener(v -> resetInputs());
 
         gvCategories.setOnItemClickListener((parent, view, position, id) -> {
-            selectedCategory = categoryList.get(position);
-            populateInputs(selectedCategory);
+            Category clicked = categoryList.get(position);
+            if (selectedCategory != null && selectedCategory.getCategoryId() == clicked.getCategoryId()) {
+                resetInputs();
+            } else {
+                selectedCategory = clicked;
+                populateInputs(selectedCategory);
+            }
         });
 
         gvCategories.setOnItemLongClickListener((parent, view, position, id) -> {
             selectedCategory = categoryList.get(position);
+            populateInputs(selectedCategory);
             showDeleteConfirmDialog(selectedCategory);
             return true;
         });
@@ -100,10 +144,8 @@ public class CategoryManageActivity extends AppCompatActivity {
         rgCategoryType = findViewById(R.id.rgCategoryType);
         rbExpense = findViewById(R.id.rbExpense);
         rbIncome = findViewById(R.id.rbIncome);
-        btnAddCategory = findViewById(R.id.btnAddCategory);
-        btnUpdateCategory = findViewById(R.id.btnUpdateCategory);
+        btnSaveCategory = findViewById(R.id.btnSaveCategory);
         btnDeleteCategory = findViewById(R.id.btnDeleteCategory);
-        btnClearCategory = findViewById(R.id.btnClearCategory);
         gvCategories = findViewById(R.id.gvCategories);
 
         categoryList = new ArrayList<>();
@@ -115,29 +157,45 @@ public class CategoryManageActivity extends AppCompatActivity {
         layoutIconPicker.removeAllViews();
         iconViews.clear();
 
-        int heightPx = dpToPx(42);
-        int marginPx = dpToPx(4);
+        int sizePx = dpToPx(42);
+        int gapPx = dpToPx(6);
+        int perRow = 10;
 
-        for (int i = 0; i < SAMPLE_ICON_NAMES.length; i++) {
-            final String iconName = SAMPLE_ICON_NAMES[i];
-            TextView tv = new TextView(this);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, heightPx, 1f);
-            if (i < SAMPLE_ICON_NAMES.length - 1) {
-                params.setMarginEnd(marginPx);
+        for (int rowStart = 0; rowStart < SAMPLE_ICON_NAMES.length; rowStart += perRow) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            if (rowStart > 0) {
+                rowParams.topMargin = gapPx;
             }
-            tv.setLayoutParams(params);
-            tv.setGravity(Gravity.CENTER);
-            tv.setText(SAMPLE_ICON_EMOJIS[i]);
-            tv.setTextSize(19f);
-            tv.setClickable(true);
-            tv.setFocusable(true);
-            tv.setOnClickListener(v -> {
-                selectedIconName = iconName;
-                refreshPickerSelection();
-            });
+            row.setLayoutParams(rowParams);
 
-            iconViews.add(tv);
-            layoutIconPicker.addView(tv);
+            int rowEnd = Math.min(rowStart + perRow, SAMPLE_ICON_NAMES.length);
+            for (int i = rowStart; i < rowEnd; i++) {
+                final String iconName = SAMPLE_ICON_NAMES[i];
+                TextView tv = new TextView(this);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(sizePx, sizePx);
+                if (i < rowEnd - 1) {
+                    params.setMarginEnd(gapPx);
+                }
+                tv.setLayoutParams(params);
+                tv.setGravity(Gravity.CENTER);
+                tv.setText(SAMPLE_ICON_EMOJIS[i]);
+                tv.setTextSize(19f);
+                tv.setClickable(true);
+                tv.setFocusable(true);
+                tv.setOnClickListener(v -> {
+                    selectedIconName = iconName;
+                    refreshPickerSelection();
+                });
+
+                iconViews.add(tv);
+                row.addView(tv);
+            }
+            layoutIconPicker.addView(row);
         }
     }
 
@@ -172,13 +230,25 @@ public class CategoryManageActivity extends AppCompatActivity {
     }
 
     private void refreshPickerSelection() {
+        int selectedBg = ContextCompat.getColor(this, R.color.nav_indicator);
+        int unselectedBg = ContextCompat.getColor(this, R.color.setting_pill_bg);
+        int unselectedStroke = ContextCompat.getColor(this, R.color.setting_divider);
+        int colorCheckStroke = ContextCompat.getColor(this, R.color.setting_text_primary);
+
+        int borderColor;
+        try {
+            borderColor = Color.parseColor(selectedColorHex);
+        } catch (Exception e) {
+            borderColor = Color.parseColor("#0A5C36");
+        }
+
         // Highlight icon đang chọn
         for (int i = 0; i < SAMPLE_ICON_NAMES.length; i++) {
             boolean isSelected = SAMPLE_ICON_NAMES[i].equalsIgnoreCase(selectedIconName);
             GradientDrawable bg = new GradientDrawable();
             bg.setCornerRadius(dpToPx(10));
-            bg.setColor(isSelected ? Color.parseColor("#E8F5E9") : Color.parseColor("#F5F5F5"));
-            bg.setStroke(dpToPx(isSelected ? 2 : 1), Color.parseColor(isSelected ? "#0A5C36" : "#E0E0E0"));
+            bg.setColor(isSelected ? selectedBg : unselectedBg);
+            bg.setStroke(dpToPx(isSelected ? 2 : 1), isSelected ? borderColor : unselectedStroke);
             iconViews.get(i).setBackground(bg);
         }
 
@@ -190,24 +260,21 @@ public class CategoryManageActivity extends AppCompatActivity {
             circle.setShape(GradientDrawable.OVAL);
             circle.setColor(Color.parseColor(SAMPLE_COLORS[i]));
             if (isSelected) {
-                circle.setStroke(dpToPx(3), Color.parseColor("#212121"));
+                circle.setStroke(dpToPx(3), colorCheckStroke);
                 tv.setText("✓");
             } else {
-                circle.setStroke(dpToPx(1), Color.parseColor("#E0E0E0"));
+                circle.setStroke(dpToPx(1), unselectedStroke);
                 tv.setText("");
             }
             tv.setBackground(circle);
         }
 
-        // Cập nhật vòng tròn xem trước
+        // Cập nhật vòng tròn xem trước (dùng màu đã chọn làm viền)
         tvCategoryPreview.setText(getEmojiByIconName(selectedIconName));
         GradientDrawable previewBg = new GradientDrawable();
         previewBg.setShape(GradientDrawable.OVAL);
-        try {
-            previewBg.setColor(Color.parseColor(selectedColorHex));
-        } catch (Exception e) {
-            previewBg.setColor(Color.parseColor("#0A5C36"));
-        }
+        previewBg.setColor(unselectedBg);
+        previewBg.setStroke(dpToPx(3), borderColor);
         tvCategoryPreview.setBackground(previewBg);
     }
 
@@ -239,6 +306,11 @@ public class CategoryManageActivity extends AppCompatActivity {
         }
 
         String type = rbIncome.isChecked() ? Category.TYPE_INCOME : Category.TYPE_EXPENSE;
+        if (categoryDAO.existsCategoryName(name, type, -1)) {
+            edtCategoryName.setError("Danh mục này đã tồn tại");
+            return;
+        }
+
         Category cat = new Category(name, type, selectedIconName, selectedColorHex);
         long result = categoryDAO.insertCategory(cat);
         if (result > 0) {
@@ -263,6 +335,11 @@ public class CategoryManageActivity extends AppCompatActivity {
         }
 
         String type = rbIncome.isChecked() ? Category.TYPE_INCOME : Category.TYPE_EXPENSE;
+        if (categoryDAO.existsCategoryName(name, type, selectedCategory.getCategoryId())) {
+            edtCategoryName.setError("Danh mục này đã tồn tại");
+            return;
+        }
+
         selectedCategory.setName(name);
         selectedCategory.setType(type);
         selectedCategory.setIconName(selectedIconName);
@@ -295,6 +372,10 @@ public class CategoryManageActivity extends AppCompatActivity {
             Toast.makeText(this, "Chỉ tài khoản ADMIN mới có quyền xóa danh mục!", Toast.LENGTH_LONG).show();
             return;
         }
+        if (categoryDAO.isCategoryInUse(cat.getCategoryId())) {
+            Toast.makeText(this, "Không thể xóa danh mục đang có giao dịch!", Toast.LENGTH_LONG).show();
+            return;
+        }
         new AlertDialog.Builder(this)
                 .setTitle("Xác nhận xóa")
                 .setMessage("Bạn có chắc chắn muốn xóa danh mục '" + cat.getName() + "'?")
@@ -304,6 +385,8 @@ public class CategoryManageActivity extends AppCompatActivity {
                         Toast.makeText(this, "Đã xóa danh mục thành công!", Toast.LENGTH_SHORT).show();
                         loadCategories();
                         resetInputs();
+                    } else if (rows == -1) {
+                        Toast.makeText(this, "Không thể xóa danh mục đang có giao dịch!", Toast.LENGTH_LONG).show();
                     } else {
                         Toast.makeText(this, "Xóa thất bại!", Toast.LENGTH_SHORT).show();
                     }
@@ -313,6 +396,7 @@ public class CategoryManageActivity extends AppCompatActivity {
     }
 
     private void populateInputs(Category cat) {
+        edtCategoryName.setError(null);
         edtCategoryName.setText(cat.getName());
         if (Category.TYPE_INCOME.equalsIgnoreCase(cat.getType())) {
             rbIncome.setChecked(true);
@@ -321,15 +405,30 @@ public class CategoryManageActivity extends AppCompatActivity {
         }
         selectedIconName = !TextUtils.isEmpty(cat.getIconName()) ? cat.getIconName() : SAMPLE_ICON_NAMES[0];
         selectedColorHex = !TextUtils.isEmpty(cat.getColorCode()) ? cat.getColorCode() : SAMPLE_COLORS[0];
+        gridAdapter.setSelectedCategoryId(cat.getCategoryId());
         refreshPickerSelection();
+        updateActionButtons();
     }
 
     private void resetInputs() {
         selectedCategory = null;
+        edtCategoryName.setError(null);
         edtCategoryName.setText("");
         rbExpense.setChecked(true);
         selectedIconName = SAMPLE_ICON_NAMES[0];
         selectedColorHex = SAMPLE_COLORS[0];
+        gridAdapter.setSelectedCategoryId(-1);
         refreshPickerSelection();
+        updateActionButtons();
+    }
+
+    private void updateActionButtons() {
+        if (selectedCategory == null) {
+            btnSaveCategory.setText("Tạo");
+            btnDeleteCategory.setVisibility(View.GONE);
+        } else {
+            btnSaveCategory.setText("Lưu");
+            btnDeleteCategory.setVisibility(View.VISIBLE);
+        }
     }
 }
