@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -25,12 +24,6 @@ public class MainActivity extends AppCompatActivity {
 
         SessionManager sessionManager = new SessionManager(this);
 
-        AppCompatDelegate.setDefaultNightMode(
-                sessionManager.isDarkMode()
-                        ? AppCompatDelegate.MODE_NIGHT_YES
-                        : AppCompatDelegate.MODE_NIGHT_NO
-        );
-
         if (!sessionManager.isLoggedIn()) {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
@@ -42,8 +35,8 @@ public class MainActivity extends AppCompatActivity {
 
         WindowInsetsControllerCompat insetsController =
                 WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        insetsController.setAppearanceLightStatusBars(!sessionManager.isDarkMode());
-        insetsController.setAppearanceLightNavigationBars(!sessionManager.isDarkMode());
+        insetsController.setAppearanceLightStatusBars(true);
+        insetsController.setAppearanceLightNavigationBars(true);
 
         View rootView = findViewById(R.id.main);
         View bottomNavContainer = findViewById(R.id.bottomNavContainer);

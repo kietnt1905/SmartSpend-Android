@@ -16,7 +16,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 
@@ -32,7 +31,7 @@ import java.util.Locale;
 public class SettingFragment extends Fragment {
 
     private TextView tvUserFullName, tvUsername, tvUserRole, tvRoleBadge, tvMonthlyLimit;
-    private SwitchCompat swDarkMode, swAuto503020;
+    private SwitchCompat swAuto503020;
     private View btnManageCategory, btnExportCsv, btnLogout;
     private View rowMonthlyLimit;
 
@@ -59,7 +58,6 @@ public class SettingFragment extends Fragment {
         tvRoleBadge = view.findViewById(R.id.tvRoleBadge);
         tvMonthlyLimit = view.findViewById(R.id.tvMonthlyLimit);
 
-        swDarkMode = view.findViewById(R.id.swDarkMode);
         swAuto503020 = view.findViewById(R.id.swAuto503020);
 
         rowMonthlyLimit = view.findViewById(R.id.rowMonthlyLimit);
@@ -69,17 +67,6 @@ public class SettingFragment extends Fragment {
 
         bindUserInfo();
         loadMonthlyLimit();
-
-        // Dark Mode switch
-        swDarkMode.setChecked(sessionManager.isDarkMode());
-        swDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked != sessionManager.isDarkMode()) {
-                sessionManager.setDarkMode(isChecked);
-                AppCompatDelegate.setDefaultNightMode(
-                        isChecked ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
-                );
-            }
-        });
 
         swAuto503020.setOnCheckedChangeListener((buttonView, isChecked) ->
                 Toast.makeText(requireContext(),

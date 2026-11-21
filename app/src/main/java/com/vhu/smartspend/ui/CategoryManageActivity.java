@@ -83,8 +83,8 @@ public class CategoryManageActivity extends AppCompatActivity {
 
         WindowInsetsControllerCompat insetsController =
                 WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        insetsController.setAppearanceLightStatusBars(!sessionManager.isDarkMode());
-        insetsController.setAppearanceLightNavigationBars(!sessionManager.isDarkMode());
+        insetsController.setAppearanceLightStatusBars(true);
+        insetsController.setAppearanceLightNavigationBars(true);
 
         View rootView = findViewById(R.id.main);
         int basePad = dpToPx(16);

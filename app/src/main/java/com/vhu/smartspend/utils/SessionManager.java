@@ -12,7 +12,6 @@ public class SessionManager {
     private static final String KEY_USERNAME = "username";
     private static final String KEY_FULL_NAME = "full_name";
     private static final String KEY_ROLE = "role";
-    private static final String KEY_DARK_MODE = "dark_mode";
 
     private final SharedPreferences sharedPreferences;
     private final SharedPreferences.Editor editor;
@@ -74,24 +73,7 @@ public class SessionManager {
      * Đăng xuất người dùng (xóa dữ liệu phiên đăng nhập)
      */
     public void logout() {
-        boolean darkMode = isDarkMode();
         editor.clear();
-        editor.putBoolean(KEY_DARK_MODE, darkMode);
         editor.apply();
-    }
-
-    /**
-     * Lưu trạng thái Dark Mode
-     */
-    public void setDarkMode(boolean isEnabled) {
-        editor.putBoolean(KEY_DARK_MODE, isEnabled);
-        editor.apply();
-    }
-
-    /**
-     * Lấy trạng thái Dark Mode
-     */
-    public boolean isDarkMode() {
-        return sharedPreferences.getBoolean(KEY_DARK_MODE, false);
     }
 }
