@@ -425,8 +425,7 @@
             android:focusable="true"
             android:foreground="?attr/selectableItemBackground"
             app:cardBackgroundColor="#0A5C36"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp">
+            app:cardCornerRadius="16dp">
 
             <ImageView
                 android:layout_width="28dp"
@@ -436,14 +435,6 @@
                 android:src="@drawable/ic_add"
                 app:tint="#FFFFFF" />
         </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="10dp"
-            android:layout_height="10dp"
-            android:layout_gravity="top|end"
-            app:cardBackgroundColor="#4ADE80"
-            app:cardCornerRadius="5dp"
-            app:cardElevation="8dp" />
     </FrameLayout>
 
 </FrameLayout>
