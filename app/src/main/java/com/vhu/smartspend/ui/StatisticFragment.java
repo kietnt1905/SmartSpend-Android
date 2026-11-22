@@ -72,7 +72,7 @@ public class StatisticFragment extends Fragment {
 
     private TextView tvOverviewTitle, tvComparisonBadge, tvTotalExpenseMain;
     private TextView tvOverviewSubLabel, tvTotalIncome, tvNetBalance;
-    private TextView tvCategorySectionTitle, tvSortOrder, tvAdviceText, tvEmptyState;
+    private TextView tvCategorySectionTitle, tvSortOrder, tvEmptyState;
     private SearchView svTransactionSearch;
     private RecyclerView rvCategorySpending;
 
@@ -164,7 +164,6 @@ public class StatisticFragment extends Fragment {
 
         tvCategorySectionTitle = view.findViewById(R.id.tvCategorySectionTitle);
         tvSortOrder = view.findViewById(R.id.tvSortOrder);
-        tvAdviceText = view.findViewById(R.id.tvAdviceText);
         tvEmptyState = view.findViewById(R.id.tvEmptyState);
 
         svTransactionSearch = view.findViewById(R.id.svTransactionSearch);
@@ -607,8 +606,6 @@ public class StatisticFragment extends Fragment {
             ));
         }
 
-        updateAdviceCard(isExpenseMode, mainAmount, totalIncome, totalExpense);
-
         String currentQuery = svTransactionSearch != null ? svTransactionSearch.getQuery().toString() : "";
         filterCategoryList(currentQuery);
     }
@@ -632,31 +629,6 @@ public class StatisticFragment extends Fragment {
         } else {
             tvComparisonBadge.setTextColor(Color.parseColor("#D32F2F"));
             tvComparisonBadge.setBackgroundColor(Color.parseColor("#FDE8E8"));
-        }
-    }
-
-    private void updateAdviceCard(boolean isExpenseMode, double mainAmount, double totalIncome, double totalExpense) {
-        if (allCategoryItems.isEmpty() || mainAmount <= 0) {
-            tvAdviceText.setText("Thêm giao dịch trong kỳ này để xem phân tích chi tiết theo từng danh mục.");
-            return;
-        }
-
-        CategoryDetailItem top = allCategoryItems.get(0);
-        for (CategoryDetailItem item : allCategoryItems) {
-            if (item.amount > top.amount) {
-                top = item;
-            }
-        }
-        if (isExpenseMode) {
-            tvAdviceText.setText(String.format(Locale.getDefault(),
-                    "Danh mục %s đang chiếm %d%% tổng chi tiêu (%s). Hãy theo dõi sát để cân đối ngân sách!",
-                    top.name, top.percentage, formatAmountDot(top.amount)));
-        } else {
-            double saved = totalIncome - totalExpense;
-            tvAdviceText.setText(String.format(Locale.getDefault(),
-                    "Nguồn thu lớn nhất là %s (%d%%). Số dư ròng hiện tại: %s.",
-                    top.name, top.percentage,
-                    (saved >= 0 ? "+" : "-") + formatAmountDot(Math.abs(saved))));
         }
     }
 

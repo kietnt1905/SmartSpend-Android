@@ -364,57 +364,5 @@
             android:nestedScrollingEnabled="false"
             tools:listitem="@android:layout/simple_list_item_2" />
 
-        <!-- 7. AI Recommendation / Smart Advice Card -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardAiAdvice"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="24dp"
-            app:cardBackgroundColor="#EBF9F5"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="#A7F3D0"
-                    android:gravity="center"
-                    android:text="💡"
-                    android:textSize="18sp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Gợi ý chi tiêu từ FinWise"
-                        android:textColor="#0B5A4B"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvAdviceText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:lineSpacingExtra="2dp"
-                        android:text="Chi tiêu cho Ăn uống &amp; Nhà hàng đang chiếm tới 38% ngân sách. Bạn có thể tiết kiệm khoảng 1.500.000 đ nếu tự nấu ăn 2 bữa/tuần!"
-                        android:textColor="#0F5257"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
