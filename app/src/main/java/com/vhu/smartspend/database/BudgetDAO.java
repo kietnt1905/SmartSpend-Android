@@ -547,10 +547,10 @@ public class BudgetDAO {
                     "FROM categories c " +
                     "LEFT JOIN budgets b ON c.category_id = b.category_id AND b.user_id = ? AND b.month_year = ? " +
                     "LEFT JOIN transactions t ON c.category_id = t.category_id AND t.user_id = ? AND t.transaction_date LIKE ? || '%' " +
-                    "WHERE c.type = 'EXPENSE' " +
+                    "WHERE c.user_id = ? AND c.type = 'EXPENSE' " +
                     "GROUP BY c.category_id, c.name, c.icon_name, c.color_code, b.budget_id, b.month_year, b.limit_amount, b.alert_percent";
 
-            cursor = db.rawQuery(sql, new String[]{String.valueOf(userId), monthYear, String.valueOf(userId), monthYear});
+            cursor = db.rawQuery(sql, new String[]{String.valueOf(userId), monthYear, String.valueOf(userId), monthYear, String.valueOf(userId)});
 
             if (cursor != null && cursor.moveToFirst()) {
                 do {
