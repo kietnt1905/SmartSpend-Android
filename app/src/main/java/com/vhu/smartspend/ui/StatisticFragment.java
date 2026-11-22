@@ -30,7 +30,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.database.BudgetDAO;
 import com.vhu.smartspend.model.Category;
-import com.vhu.smartspend.utils.Budget503020Dialog;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -66,7 +65,6 @@ public class StatisticFragment extends Fragment {
     private TextView tvOverviewSubLabel, tvTotalIncome, tvNetBalance;
     private TextView tvCategorySectionTitle, tvAdviceText, tvEmptyState;
     private SearchView svTransactionSearch;
-    private TextView btn503020Rule;
     private RecyclerView rvCategorySpending;
 
     // Data
@@ -113,7 +111,6 @@ public class StatisticFragment extends Fragment {
         setupTypeFilterTabs();
         setupMonthYearPicker();
         setupInstantSearchView();
-        setupBudget503020Rule();
 
         rvCategorySpending.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -156,7 +153,6 @@ public class StatisticFragment extends Fragment {
         tvEmptyState = view.findViewById(R.id.tvEmptyState);
 
         svTransactionSearch = view.findViewById(R.id.svTransactionSearch);
-        btn503020Rule = view.findViewById(R.id.btn503020Rule);
         rvCategorySpending = view.findViewById(R.id.rvCategorySpending);
     }
 
@@ -199,15 +195,6 @@ public class StatisticFragment extends Fragment {
             categoryAdapter = new CategoryAdapter(filteredList, currentType == TYPE_EXPENSE);
             rvCategorySpending.setAdapter(categoryAdapter);
         }
-    }
-
-    private void setupBudget503020Rule() {
-        if (btn503020Rule == null) return;
-
-        btn503020Rule.setOnClickListener(v -> {
-            if (getContext() == null) return;
-            Budget503020Dialog.show(getContext(), getCurrentUserId(), this::loadStatisticData);
-        });
     }
 
     private void setupTimeFilterTabs() {
