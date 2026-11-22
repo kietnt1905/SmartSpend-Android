@@ -75,14 +75,22 @@ public class CategoryGridAdapter extends BaseAdapter {
 
             TextView tvName = new TextView(context);
             tvName.setGravity(Gravity.CENTER);
-            tvName.setTextSize(14);
+            tvName.setTextSize(13.5f);
+            tvName.setTypeface(null, android.graphics.Typeface.BOLD);
             tvName.setMaxLines(1);
             tvName.setEllipsize(TextUtils.TruncateAt.END);
 
             TextView tvType = new TextView(context);
             tvType.setGravity(Gravity.CENTER);
-            tvType.setTextSize(11);
-            tvType.setPadding(dpToPx(6), dpToPx(2), dpToPx(6), dpToPx(2));
+            tvType.setTextSize(10.5f);
+            tvType.setTypeface(null, android.graphics.Typeface.BOLD);
+            LinearLayout.LayoutParams typeParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            typeParams.topMargin = dpToPx(5);
+            tvType.setLayoutParams(typeParams);
+            tvType.setPadding(dpToPx(8), dpToPx(2), dpToPx(8), dpToPx(2));
 
             root.addView(tvIconCircle);
             root.addView(tvName);
@@ -103,7 +111,7 @@ public class CategoryGridAdapter extends BaseAdapter {
         Category category = categoryList.get(position);
         if (category != null) {
             holder.tvName.setText(category.getName());
-            holder.tvName.setTextColor(ContextCompat.getColor(context, R.color.setting_text_primary));
+            holder.tvName.setTextColor(Color.parseColor("#0F172A"));
 
             int borderColor = Color.parseColor("#0A5C36");
             if (category.getColorCode() != null && !category.getColorCode().trim().isEmpty()) {
@@ -113,9 +121,11 @@ public class CategoryGridAdapter extends BaseAdapter {
                 }
             }
 
+            int softTint = Color.argb(32, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor));
+
             GradientDrawable circleDrawable = new GradientDrawable();
             circleDrawable.setShape(GradientDrawable.OVAL);
-            circleDrawable.setColor(ContextCompat.getColor(context, R.color.setting_pill_bg));
+            circleDrawable.setColor(softTint);
             circleDrawable.setStroke(dpToPx(2), borderColor);
             holder.tvIconCircle.setBackground(circleDrawable);
 
@@ -123,20 +133,27 @@ public class CategoryGridAdapter extends BaseAdapter {
 
             boolean isSelected = category.getCategoryId() == selectedCategoryId;
             GradientDrawable cardDrawable = new GradientDrawable();
-            cardDrawable.setCornerRadius(dpToPx(12));
-            cardDrawable.setColor(ContextCompat.getColor(
-                    context,
-                    isSelected ? R.color.nav_indicator : R.color.setting_card
-            ));
-            cardDrawable.setStroke(dpToPx(isSelected ? 3 : 2), borderColor);
+            cardDrawable.setCornerRadius(dpToPx(14));
+            if (isSelected) {
+                cardDrawable.setColor(Color.argb(28, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
+                cardDrawable.setStroke(dpToPx(2), borderColor);
+            } else {
+                cardDrawable.setColor(Color.WHITE);
+                cardDrawable.setStroke(dpToPx(1), Color.argb(90, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
+            }
             holder.root.setBackground(cardDrawable);
 
-            if (Category.TYPE_INCOME.equalsIgnoreCase(category.getType())) {
+            boolean isIncome = Category.TYPE_INCOME.equalsIgnoreCase(category.getType());
+            GradientDrawable typePill = new GradientDrawable();
+            typePill.setCornerRadius(dpToPx(8));
+            typePill.setColor(Color.parseColor(isIncome ? "#DCFCE7" : "#FEE2E2"));
+            holder.tvType.setBackground(typePill);
+            if (isIncome) {
                 holder.tvType.setText("Thu nhập");
-                holder.tvType.setTextColor(Color.parseColor("#2E7D32"));
+                holder.tvType.setTextColor(Color.parseColor("#15803D"));
             } else {
                 holder.tvType.setText("Chi tiêu");
-                holder.tvType.setTextColor(Color.parseColor("#DC2626"));
+                holder.tvType.setTextColor(Color.parseColor("#B91C1C"));
             }
         }
 
