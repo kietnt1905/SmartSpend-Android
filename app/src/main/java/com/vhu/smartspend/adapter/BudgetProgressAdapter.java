@@ -3,7 +3,6 @@ package com.vhu.smartspend.adapter;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ClipDrawable;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
@@ -131,8 +130,15 @@ public class BudgetProgressAdapter extends RecyclerView.Adapter<BudgetProgressAd
      * Tự động thay đổi màu sắc của thanh ProgressBar tiến độ
      */
     private void setProgressBarColor(ProgressBar progressBar, int color) {
-        ColorDrawable backgroundDrawable = new ColorDrawable(Color.parseColor("#EBF3FE"));
-        ColorDrawable progressDrawable = new ColorDrawable(color);
+        float density = progressBar.getResources().getDisplayMetrics().density;
+        GradientDrawable backgroundDrawable = new GradientDrawable();
+        backgroundDrawable.setCornerRadius(4f * density);
+        backgroundDrawable.setColor(Color.parseColor("#E2E8F0"));
+
+        GradientDrawable progressDrawable = new GradientDrawable();
+        progressDrawable.setCornerRadius(4f * density);
+        progressDrawable.setColor(color);
+
         ClipDrawable clipProgress = new ClipDrawable(progressDrawable, Gravity.START, ClipDrawable.HORIZONTAL);
 
         LayerDrawable layerDrawable = new LayerDrawable(new Drawable[]{

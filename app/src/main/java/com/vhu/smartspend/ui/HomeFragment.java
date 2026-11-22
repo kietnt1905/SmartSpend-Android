@@ -168,32 +168,45 @@ public class HomeFragment extends Fragment {
             LinearLayout row = new LinearLayout(getContext());
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(0, Math.round(8 * d), 0, Math.round(8 * d));
+            LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            if (i < list.size() - 1) {
+                rowLp.bottomMargin = Math.round(8 * d);
+            }
+            row.setLayoutParams(rowLp);
+            row.setPadding(Math.round(12 * d), Math.round(10 * d), Math.round(12 * d), Math.round(10 * d));
             row.setClickable(true);
             row.setFocusable(true);
+
+            GradientDrawable rowBg = new GradientDrawable();
+            rowBg.setCornerRadius(12 * d);
+            rowBg.setColor(Color.parseColor("#F8FAFC"));
+            rowBg.setStroke(Math.round(1 * d), Color.parseColor("#E2E8F0"));
+            row.setBackground(rowBg);
 
             int borderColor = parseCategoryColor(tx.getCategoryColorCode(), isIncome ? "#0A5C36" : "#C62828");
             GradientDrawable circle = new GradientDrawable();
             circle.setShape(GradientDrawable.OVAL);
-            circle.setColor(Color.argb(30, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
+            circle.setColor(Color.argb(36, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
             circle.setStroke(Math.round(2 * d), borderColor);
 
             TextView tvIcon = new TextView(getContext());
-            tvIcon.setLayoutParams(new LinearLayout.LayoutParams(Math.round(40 * d), Math.round(40 * d)));
+            tvIcon.setLayoutParams(new LinearLayout.LayoutParams(Math.round(42 * d), Math.round(42 * d)));
             tvIcon.setGravity(Gravity.CENTER);
             tvIcon.setText(mapEmoji(tx.getCategoryIconName()));
-            tvIcon.setTextSize(17f);
+            tvIcon.setTextSize(18f);
             tvIcon.setBackground(circle);
 
             LinearLayout info = new LinearLayout(getContext());
             info.setOrientation(LinearLayout.VERTICAL);
             LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
             infoLp.setMarginStart(Math.round(12 * d));
+            infoLp.setMarginEnd(Math.round(8 * d));
             info.setLayoutParams(infoLp);
 
             TextView tvTitle = new TextView(getContext());
             tvTitle.setText(!TextUtils.isEmpty(tx.getTitle()) ? tx.getTitle() : tx.getCategoryName());
-            tvTitle.setTextColor(Color.parseColor("#1A1A1A"));
+            tvTitle.setTextColor(Color.parseColor("#0F172A"));
             tvTitle.setTextSize(14f);
             tvTitle.setTypeface(null, Typeface.BOLD);
             tvTitle.setMaxLines(1);
@@ -202,17 +215,23 @@ public class HomeFragment extends Fragment {
             String cat = !TextUtils.isEmpty(tx.getCategoryName()) ? tx.getCategoryName() : "Khác";
             TextView tvSub = new TextView(getContext());
             tvSub.setText(cat + " • " + DateUtils.formatToDisplay(tx.getTransactionDate()));
-            tvSub.setTextColor(Color.parseColor("#757575"));
-            tvSub.setTextSize(11f);
+            tvSub.setTextColor(Color.parseColor("#64748B"));
+            tvSub.setTextSize(11.5f);
+            tvSub.setPadding(0, Math.round(2 * d), 0, 0);
 
             info.addView(tvTitle);
             info.addView(tvSub);
 
             TextView tvAmount = new TextView(getContext());
             tvAmount.setText((isIncome ? "+" : "-") + CurrencyUtils.formatVND(tx.getAmount()));
-            tvAmount.setTextColor(Color.parseColor(isIncome ? "#2E7D32" : "#C62828"));
-            tvAmount.setTextSize(14f);
+            tvAmount.setTextColor(Color.parseColor(isIncome ? "#047857" : "#B91C1C"));
+            tvAmount.setTextSize(13f);
             tvAmount.setTypeface(null, Typeface.BOLD);
+            tvAmount.setPadding(Math.round(9 * d), Math.round(5 * d), Math.round(9 * d), Math.round(5 * d));
+            GradientDrawable amountPill = new GradientDrawable();
+            amountPill.setCornerRadius(8 * d);
+            amountPill.setColor(Color.parseColor(isIncome ? "#DCFCE7" : "#FEE2E2"));
+            tvAmount.setBackground(amountPill);
 
             row.addView(tvIcon);
             row.addView(info);
@@ -227,16 +246,6 @@ public class HomeFragment extends Fragment {
             });
 
             layoutRecentTransactions.addView(row);
-
-            if (i < list.size() - 1) {
-                View divider = new View(getContext());
-                LinearLayout.LayoutParams divLp = new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, Math.round(1 * d));
-                divLp.setMargins(0, Math.round(4 * d), 0, Math.round(4 * d));
-                divider.setLayoutParams(divLp);
-                divider.setBackgroundColor(Color.parseColor("#F0F0F0"));
-                layoutRecentTransactions.addView(divider);
-            }
         }
     }
 

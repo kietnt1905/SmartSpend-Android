@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.ClipDrawable;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
@@ -751,18 +750,20 @@ public class StatisticFragment extends Fragment {
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            float d = parent.getResources().getDisplayMetrics().density;
+
             CardView card = new CardView(parent.getContext());
             CardView.LayoutParams cardParams = new CardView.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            cardParams.setMargins(0, 0, 0, 16);
+            cardParams.setMargins(0, 0, 0, Math.round(10 * d));
             card.setLayoutParams(cardParams);
-            card.setRadius(14f);
-            card.setCardElevation(1f);
+            card.setRadius(14f * d);
+            card.setCardElevation(2f * d);
             card.setCardBackgroundColor(Color.WHITE);
 
             LinearLayout root = new LinearLayout(parent.getContext());
             root.setOrientation(LinearLayout.VERTICAL);
-            root.setPadding(24, 20, 24, 20);
+            root.setPadding(Math.round(14 * d), Math.round(12 * d), Math.round(14 * d), Math.round(12 * d));
             card.addView(root);
 
             LinearLayout topRow = new LinearLayout(parent.getContext());
@@ -770,24 +771,25 @@ public class StatisticFragment extends Fragment {
             topRow.setGravity(Gravity.CENTER_VERTICAL);
 
             TextView tvIcon = new TextView(parent.getContext());
-            tvIcon.setLayoutParams(new LinearLayout.LayoutParams(88, 88));
+            tvIcon.setLayoutParams(new LinearLayout.LayoutParams(Math.round(44 * d), Math.round(44 * d)));
             tvIcon.setGravity(Gravity.CENTER);
-            tvIcon.setTextSize(18f);
+            tvIcon.setTextSize(19f);
 
             LinearLayout textCol = new LinearLayout(parent.getContext());
             textCol.setOrientation(LinearLayout.VERTICAL);
             LinearLayout.LayoutParams textColParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-            textColParams.setMargins(20, 0, 0, 0);
+            textColParams.setMargins(Math.round(12 * d), 0, Math.round(8 * d), 0);
             textCol.setLayoutParams(textColParams);
 
             TextView tvTitle = new TextView(parent.getContext());
-            tvTitle.setTextSize(14f);
-            tvTitle.setTextColor(Color.parseColor("#1A1A1A"));
+            tvTitle.setTextSize(14.5f);
+            tvTitle.setTextColor(Color.parseColor("#0F172A"));
             tvTitle.setTypeface(null, Typeface.BOLD);
 
             TextView tvSub = new TextView(parent.getContext());
-            tvSub.setTextSize(11f);
-            tvSub.setTextColor(Color.parseColor("#757575"));
+            tvSub.setTextSize(12f);
+            tvSub.setTextColor(Color.parseColor("#64748B"));
+            tvSub.setPadding(0, Math.round(2 * d), 0, 0);
 
             textCol.addView(tvTitle);
             textCol.addView(tvSub);
@@ -797,12 +799,17 @@ public class StatisticFragment extends Fragment {
             rightCol.setGravity(Gravity.END);
 
             TextView tvAmount = new TextView(parent.getContext());
-            tvAmount.setTextSize(14f);
+            tvAmount.setTextSize(14.5f);
             tvAmount.setTypeface(null, Typeface.BOLD);
 
             TextView tvPercent = new TextView(parent.getContext());
             tvPercent.setTextSize(11f);
             tvPercent.setTypeface(null, Typeface.BOLD);
+            LinearLayout.LayoutParams pctParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            pctParams.topMargin = Math.round(4 * d);
+            tvPercent.setLayoutParams(pctParams);
+            tvPercent.setPadding(Math.round(8 * d), Math.round(2 * d), Math.round(8 * d), Math.round(2 * d));
 
             rightCol.addView(tvAmount);
             rightCol.addView(tvPercent);
@@ -814,8 +821,8 @@ public class StatisticFragment extends Fragment {
             root.addView(topRow);
 
             ProgressBar pb = new ProgressBar(parent.getContext(), null, android.R.attr.progressBarStyleHorizontal);
-            LinearLayout.LayoutParams pbParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 12);
-            pbParams.setMargins(0, 12, 0, 0);
+            LinearLayout.LayoutParams pbParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.round(8 * d));
+            pbParams.setMargins(0, Math.round(10 * d), 0, 0);
             pb.setLayoutParams(pbParams);
             pb.setMax(100);
 
@@ -827,12 +834,12 @@ public class StatisticFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             CategoryDetailItem item = list.get(position);
+            float density = holder.tvIcon.getResources().getDisplayMetrics().density;
 
             holder.tvIcon.setText(item.iconEmoji);
             GradientDrawable iconBg = new GradientDrawable();
             iconBg.setShape(GradientDrawable.OVAL);
             iconBg.setColor(item.iconBgColor);
-            float density = holder.tvIcon.getResources().getDisplayMetrics().density;
             iconBg.setStroke(Math.round(2 * density), item.color);
             holder.tvIcon.setBackground(iconBg);
 
@@ -841,17 +848,28 @@ public class StatisticFragment extends Fragment {
 
             String prefix = isExpense ? "-" : "+";
             holder.tvAmount.setText(prefix + formatAmountDot(item.amount));
-            holder.tvAmount.setTextColor(Color.parseColor(isExpense ? "#D32F2F" : "#0B8043"));
+            holder.tvAmount.setTextColor(Color.parseColor(isExpense ? "#B91C1C" : "#047857"));
 
             holder.tvPercent.setText(item.percentage + "%");
             holder.tvPercent.setTextColor(item.color);
+            GradientDrawable pctPill = new GradientDrawable();
+            pctPill.setCornerRadius(8f * density);
+            pctPill.setColor(item.iconBgColor);
+            holder.tvPercent.setBackground(pctPill);
 
             holder.pb.setProgress(item.percentage);
 
-            ColorDrawable progressDrawable = new ColorDrawable(item.color);
-            ClipDrawable clipProgress = new ClipDrawable(progressDrawable, Gravity.START, ClipDrawable.HORIZONTAL);
+            GradientDrawable trackBg = new GradientDrawable();
+            trackBg.setCornerRadius(4f * density);
+            trackBg.setColor(Color.parseColor("#E2E8F0"));
+
+            GradientDrawable progressFill = new GradientDrawable();
+            progressFill.setCornerRadius(4f * density);
+            progressFill.setColor(item.color);
+
+            ClipDrawable clipProgress = new ClipDrawable(progressFill, Gravity.START, ClipDrawable.HORIZONTAL);
             LayerDrawable layerDrawable = new LayerDrawable(new android.graphics.drawable.Drawable[]{
-                    new ColorDrawable(Color.parseColor("#EBF3FE")), clipProgress
+                    trackBg, clipProgress
             });
             layerDrawable.setId(0, android.R.id.background);
             layerDrawable.setId(1, android.R.id.progress);
