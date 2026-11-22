@@ -2,11 +2,10 @@ package com.vhu.smartspend.ui;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.ClipDrawable;
 import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -750,85 +749,9 @@ public class StatisticFragment extends Fragment {
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            float d = parent.getResources().getDisplayMetrics().density;
-
-            CardView card = new CardView(parent.getContext());
-            CardView.LayoutParams cardParams = new CardView.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            cardParams.setMargins(0, 0, 0, Math.round(10 * d));
-            card.setLayoutParams(cardParams);
-            card.setRadius(14f * d);
-            card.setCardElevation(2f * d);
-            card.setCardBackgroundColor(Color.WHITE);
-
-            LinearLayout root = new LinearLayout(parent.getContext());
-            root.setOrientation(LinearLayout.VERTICAL);
-            root.setPadding(Math.round(14 * d), Math.round(12 * d), Math.round(14 * d), Math.round(12 * d));
-            card.addView(root);
-
-            LinearLayout topRow = new LinearLayout(parent.getContext());
-            topRow.setOrientation(LinearLayout.HORIZONTAL);
-            topRow.setGravity(Gravity.CENTER_VERTICAL);
-
-            TextView tvIcon = new TextView(parent.getContext());
-            tvIcon.setLayoutParams(new LinearLayout.LayoutParams(Math.round(44 * d), Math.round(44 * d)));
-            tvIcon.setGravity(Gravity.CENTER);
-            tvIcon.setTextSize(19f);
-
-            LinearLayout textCol = new LinearLayout(parent.getContext());
-            textCol.setOrientation(LinearLayout.VERTICAL);
-            LinearLayout.LayoutParams textColParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-            textColParams.setMargins(Math.round(12 * d), 0, Math.round(8 * d), 0);
-            textCol.setLayoutParams(textColParams);
-
-            TextView tvTitle = new TextView(parent.getContext());
-            tvTitle.setTextSize(14.5f);
-            tvTitle.setTextColor(Color.parseColor("#0F172A"));
-            tvTitle.setTypeface(null, Typeface.BOLD);
-
-            TextView tvSub = new TextView(parent.getContext());
-            tvSub.setTextSize(12f);
-            tvSub.setTextColor(Color.parseColor("#64748B"));
-            tvSub.setPadding(0, Math.round(2 * d), 0, 0);
-
-            textCol.addView(tvTitle);
-            textCol.addView(tvSub);
-
-            LinearLayout rightCol = new LinearLayout(parent.getContext());
-            rightCol.setOrientation(LinearLayout.VERTICAL);
-            rightCol.setGravity(Gravity.END);
-
-            TextView tvAmount = new TextView(parent.getContext());
-            tvAmount.setTextSize(14.5f);
-            tvAmount.setTypeface(null, Typeface.BOLD);
-
-            TextView tvPercent = new TextView(parent.getContext());
-            tvPercent.setTextSize(11f);
-            tvPercent.setTypeface(null, Typeface.BOLD);
-            LinearLayout.LayoutParams pctParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            pctParams.topMargin = Math.round(4 * d);
-            tvPercent.setLayoutParams(pctParams);
-            tvPercent.setPadding(Math.round(8 * d), Math.round(2 * d), Math.round(8 * d), Math.round(2 * d));
-
-            rightCol.addView(tvAmount);
-            rightCol.addView(tvPercent);
-
-            topRow.addView(tvIcon);
-            topRow.addView(textCol);
-            topRow.addView(rightCol);
-
-            root.addView(topRow);
-
-            ProgressBar pb = new ProgressBar(parent.getContext(), null, android.R.attr.progressBarStyleHorizontal);
-            LinearLayout.LayoutParams pbParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.round(8 * d));
-            pbParams.setMargins(0, Math.round(10 * d), 0, 0);
-            pb.setLayoutParams(pbParams);
-            pb.setMax(100);
-
-            root.addView(pb);
-
-            return new ViewHolder(card, tvIcon, tvTitle, tvSub, tvAmount, tvPercent, pb);
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_statistic_category, parent, false);
+            return new ViewHolder(view);
         }
 
         @Override
@@ -858,23 +781,7 @@ public class StatisticFragment extends Fragment {
             holder.tvPercent.setBackground(pctPill);
 
             holder.pb.setProgress(item.percentage);
-
-            GradientDrawable trackBg = new GradientDrawable();
-            trackBg.setCornerRadius(4f * density);
-            trackBg.setColor(Color.parseColor("#E2E8F0"));
-
-            GradientDrawable progressFill = new GradientDrawable();
-            progressFill.setCornerRadius(4f * density);
-            progressFill.setColor(item.color);
-
-            ClipDrawable clipProgress = new ClipDrawable(progressFill, Gravity.START, ClipDrawable.HORIZONTAL);
-            LayerDrawable layerDrawable = new LayerDrawable(new android.graphics.drawable.Drawable[]{
-                    trackBg, clipProgress
-            });
-            layerDrawable.setId(0, android.R.id.background);
-            layerDrawable.setId(1, android.R.id.progress);
-
-            holder.pb.setProgressDrawable(layerDrawable);
+            holder.pb.setProgressTintList(ColorStateList.valueOf(item.color));
         }
 
         @Override
@@ -886,15 +793,14 @@ public class StatisticFragment extends Fragment {
             final TextView tvIcon, tvTitle, tvSub, tvAmount, tvPercent;
             final ProgressBar pb;
 
-            ViewHolder(@NonNull View itemView, TextView tvIcon, TextView tvTitle, TextView tvSub,
-                       TextView tvAmount, TextView tvPercent, ProgressBar pb) {
+            ViewHolder(@NonNull View itemView) {
                 super(itemView);
-                this.tvIcon = tvIcon;
-                this.tvTitle = tvTitle;
-                this.tvSub = tvSub;
-                this.tvAmount = tvAmount;
-                this.tvPercent = tvPercent;
-                this.pb = pb;
+                tvIcon = itemView.findViewById(R.id.tvStatCatIcon);
+                tvTitle = itemView.findViewById(R.id.tvStatCatTitle);
+                tvSub = itemView.findViewById(R.id.tvStatCatSub);
+                tvAmount = itemView.findViewById(R.id.tvStatCatAmount);
+                tvPercent = itemView.findViewById(R.id.tvStatCatPercent);
+                pb = itemView.findViewById(R.id.pbStatCategory);
             }
         }
     }
