@@ -317,7 +317,8 @@ public class CategoryManageActivity extends AppCompatActivity {
             return;
         }
 
-        Category cat = new Category(userId, name, type, selectedIconName, selectedColorHex);
+        Category cat = new Category(name, type, selectedIconName, selectedColorHex);
+        cat.setUserId(userId);
         long result = categoryDAO.insertCategory(cat);
         if (result > 0) {
             Toast.makeText(this, "Thêm danh mục thành công!", Toast.LENGTH_SHORT).show();

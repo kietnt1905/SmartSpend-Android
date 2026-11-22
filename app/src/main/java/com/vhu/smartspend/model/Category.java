@@ -25,8 +25,8 @@ public class Category implements Serializable {
         this.colorCode = colorCode;
     }
 
-    public Category(int userId, String name, String type, String iconName, String colorCode) {
-        this.userId = userId;
+    public Category(int categoryId, String name, String type, String iconName, String colorCode) {
+        this.categoryId = categoryId;
         this.name = name;
         this.type = type;
         this.iconName = iconName;
