@@ -15,7 +15,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- 1. Time Filter Segment Bar (Tháng / Năm) -->
+        <!-- 1. Time Filter Segment Bar (Ngày / Tháng / Năm) -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -29,6 +29,17 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:padding="3dp">
+
+                <TextView
+                    android:id="@+id/tabDay"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="Ngày"
+                    android:textColor="#666666"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tabMonth"
@@ -300,15 +311,22 @@
                 android:id="@+id/tvCategorySectionTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
                 android:text="Chi tiết chi tiêu"
                 android:textColor="#1A1A1A"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvSortOrder"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp"
                 android:text="Sắp xếp: % cao nhất ▾"
                 android:textColor="#0B5A4B"
                 android:textSize="12sp"

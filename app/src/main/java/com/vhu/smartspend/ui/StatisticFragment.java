@@ -1,5 +1,6 @@
 package com.vhu.smartspend.ui;
 
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -14,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
+import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -31,6 +33,7 @@ import com.vhu.smartspend.R;
 import com.vhu.smartspend.database.BudgetDAO;
 import com.vhu.smartspend.model.Category;
 
+import java.text.Collator;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -40,7 +43,7 @@ import java.util.Locale;
 
 /**
  * Màn hình Thống kê Thu / Chi (StatisticFragment)
- * - Lọc theo Tháng / Năm với hộp thoại chọn chỉ Tháng & Năm
+ * - Lọc theo Ngày / Tháng / Năm
  * - Tách riêng chế độ xem Chi tiêu và Thu nhập
  * - Thẻ tổng quan gọn, đồng bộ theo loại đang xem
  *
@@ -48,22 +51,28 @@ import java.util.Locale;
  */
 public class StatisticFragment extends Fragment {
 
-    private static final int TAB_MONTH = 0;
-    private static final int TAB_YEAR = 1;
+    private static final int TAB_DAY = 0;
+    private static final int TAB_MONTH = 1;
+    private static final int TAB_YEAR = 2;
 
     private static final int TYPE_EXPENSE = 0;
     private static final int TYPE_INCOME = 1;
 
+    private static final int SORT_PERCENT_DESC = 0;
+    private static final int SORT_PERCENT_ASC = 1;
+    private static final int SORT_TX_COUNT_DESC = 2;
+    private static final int SORT_NAME_ASC = 3;
+
     // View Components
     private NestedScrollView nestedScrollView;
-    private TextView tabMonth, tabYear;
+    private TextView tabDay, tabMonth, tabYear;
     private TextView tabExpense, tabIncome;
     private TextView btnPrevDate, btnNextDate, tvDateRangeDisplay;
     private CardView cardDateRangePicker;
 
     private TextView tvOverviewTitle, tvComparisonBadge, tvTotalExpenseMain;
     private TextView tvOverviewSubLabel, tvTotalIncome, tvNetBalance;
-    private TextView tvCategorySectionTitle, tvAdviceText, tvEmptyState;
+    private TextView tvCategorySectionTitle, tvSortOrder, tvAdviceText, tvEmptyState;
     private SearchView svTransactionSearch;
     private RecyclerView rvCategorySpending;
 
@@ -75,8 +84,10 @@ public class StatisticFragment extends Fragment {
     private BudgetDAO budgetDAO;
     private int selectedYear;
     private int selectedMonth; // 0-based (0..11)
+    private int selectedDay;
     private int currentTab = TAB_MONTH;
     private int currentType = TYPE_EXPENSE;
+    private int currentSortMode = SORT_PERCENT_DESC;
 
     private int getCurrentUserId() {
         if (getContext() == null) return 1;
@@ -105,12 +116,14 @@ public class StatisticFragment extends Fragment {
         Calendar currentCalendar = Calendar.getInstance();
         selectedYear = currentCalendar.get(Calendar.YEAR);
         selectedMonth = currentCalendar.get(Calendar.MONTH);
+        selectedDay = currentCalendar.get(Calendar.DAY_OF_MONTH);
 
         initViews(view);
         setupTimeFilterTabs();
         setupTypeFilterTabs();
         setupMonthYearPicker();
         setupInstantSearchView();
+        setupSortOrder();
 
         rvCategorySpending.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -131,6 +144,7 @@ public class StatisticFragment extends Fragment {
 
     private void initViews(View view) {
         nestedScrollView = view.findViewById(R.id.nestedScrollView);
+        tabDay = view.findViewById(R.id.tabDay);
         tabMonth = view.findViewById(R.id.tabMonth);
         tabYear = view.findViewById(R.id.tabYear);
         tabExpense = view.findViewById(R.id.tabExpense);
@@ -149,6 +163,7 @@ public class StatisticFragment extends Fragment {
         tvNetBalance = view.findViewById(R.id.tvNetBalance);
 
         tvCategorySectionTitle = view.findViewById(R.id.tvCategorySectionTitle);
+        tvSortOrder = view.findViewById(R.id.tvSortOrder);
         tvAdviceText = view.findViewById(R.id.tvAdviceText);
         tvEmptyState = view.findViewById(R.id.tvEmptyState);
 
@@ -174,6 +189,47 @@ public class StatisticFragment extends Fragment {
         });
     }
 
+    private void setupSortOrder() {
+        if (tvSortOrder == null) return;
+        updateSortLabel();
+        tvSortOrder.setOnClickListener(v -> {
+            if (getContext() == null) return;
+            PopupMenu popup = new PopupMenu(getContext(), tvSortOrder);
+            popup.getMenu().add(0, SORT_PERCENT_DESC, 0, "% cao nhất");
+            popup.getMenu().add(0, SORT_PERCENT_ASC, 1, "% thấp nhất");
+            popup.getMenu().add(0, SORT_TX_COUNT_DESC, 2, "Nhiều giao dịch nhất");
+            popup.getMenu().add(0, SORT_NAME_ASC, 3, "Tên danh mục (A-Z)");
+
+            popup.setOnMenuItemClickListener(item -> {
+                currentSortMode = item.getItemId();
+                updateSortLabel();
+                String currentQuery = svTransactionSearch != null ? svTransactionSearch.getQuery().toString() : "";
+                filterCategoryList(currentQuery);
+                return true;
+            });
+            popup.show();
+        });
+    }
+
+    private void updateSortLabel() {
+        if (tvSortOrder == null) return;
+        switch (currentSortMode) {
+            case SORT_PERCENT_ASC:
+                tvSortOrder.setText("Sắp xếp: % thấp nhất ▾");
+                break;
+            case SORT_TX_COUNT_DESC:
+                tvSortOrder.setText("Sắp xếp: Nhiều giao dịch ▾");
+                break;
+            case SORT_NAME_ASC:
+                tvSortOrder.setText("Sắp xếp: Tên A-Z ▾");
+                break;
+            case SORT_PERCENT_DESC:
+            default:
+                tvSortOrder.setText("Sắp xếp: % cao nhất ▾");
+                break;
+        }
+    }
+
     private void filterCategoryList(String query) {
         if (allCategoryItems == null) return;
 
@@ -186,6 +242,8 @@ public class StatisticFragment extends Fragment {
             }
         }
 
+        sortCategoryItems(filteredList);
+
         if (filteredList.isEmpty()) {
             tvEmptyState.setVisibility(View.VISIBLE);
             rvCategorySpending.setVisibility(View.GONE);
@@ -197,19 +255,45 @@ public class StatisticFragment extends Fragment {
         }
     }
 
+    private void sortCategoryItems(List<CategoryDetailItem> items) {
+        Collator collator = Collator.getInstance(Locale.forLanguageTag("vi-VN"));
+        collator.setStrength(Collator.PRIMARY);
+
+        items.sort((a, b) -> {
+            switch (currentSortMode) {
+                case SORT_PERCENT_ASC:
+                    return Double.compare(a.amount, b.amount);
+                case SORT_TX_COUNT_DESC:
+                    int countCmp = Integer.compare(b.txCount, a.txCount);
+                    return countCmp != 0 ? countCmp : Double.compare(b.amount, a.amount);
+                case SORT_NAME_ASC:
+                    String nameA = a.name != null ? a.name : "";
+                    String nameB = b.name != null ? b.name : "";
+                    return collator.compare(nameA, nameB);
+                case SORT_PERCENT_DESC:
+                default:
+                    return Double.compare(b.amount, a.amount);
+            }
+        });
+    }
+
     private void setupTimeFilterTabs() {
         View.OnClickListener tabListener = v -> {
             int id = v.getId();
-            if (id == R.id.tabMonth) {
+            if (id == R.id.tabDay) {
+                currentTab = TAB_DAY;
+            } else if (id == R.id.tabMonth) {
                 currentTab = TAB_MONTH;
             } else if (id == R.id.tabYear) {
                 currentTab = TAB_YEAR;
             }
+            clampSelectedDay();
             updateTimeTabStyles();
             updateDateRangeDisplay();
             loadStatisticData();
         };
 
+        tabDay.setOnClickListener(tabListener);
         tabMonth.setOnClickListener(tabListener);
         tabYear.setOnClickListener(tabListener);
 
@@ -246,10 +330,18 @@ public class StatisticFragment extends Fragment {
     }
 
     private void updateTimeTabStyles() {
+        resetTab(tabDay);
         resetTab(tabMonth);
         resetTab(tabYear);
 
-        TextView activeTab = (currentTab == TAB_YEAR) ? tabYear : tabMonth;
+        TextView activeTab;
+        if (currentTab == TAB_DAY) {
+            activeTab = tabDay;
+        } else if (currentTab == TAB_YEAR) {
+            activeTab = tabYear;
+        } else {
+            activeTab = tabMonth;
+        }
         activeTab.setTextColor(Color.WHITE);
         activeTab.setBackground(createTabDrawable(Color.parseColor("#0B5A4B")));
     }
@@ -280,8 +372,26 @@ public class StatisticFragment extends Fragment {
         return gd;
     }
 
+    private void clampSelectedDay() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(selectedYear, selectedMonth, 1);
+        int maxDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+        if (selectedDay > maxDay) {
+            selectedDay = maxDay;
+        } else if (selectedDay < 1) {
+            selectedDay = 1;
+        }
+    }
+
     private void adjustDateRange(int delta) {
-        if (currentTab == TAB_MONTH) {
+        if (currentTab == TAB_DAY) {
+            Calendar cal = Calendar.getInstance();
+            cal.set(selectedYear, selectedMonth, selectedDay);
+            cal.add(Calendar.DAY_OF_MONTH, delta);
+            selectedYear = cal.get(Calendar.YEAR);
+            selectedMonth = cal.get(Calendar.MONTH);
+            selectedDay = cal.get(Calendar.DAY_OF_MONTH);
+        } else if (currentTab == TAB_MONTH) {
             selectedMonth += delta;
             if (selectedMonth > 11) {
                 selectedMonth = 0;
@@ -290,15 +400,20 @@ public class StatisticFragment extends Fragment {
                 selectedMonth = 11;
                 selectedYear--;
             }
+            clampSelectedDay();
         } else {
             selectedYear += delta;
+            clampSelectedDay();
         }
         updateDateRangeDisplay();
     }
 
     private void updateDateRangeDisplay() {
         String displayStr;
-        if (currentTab == TAB_YEAR) {
+        if (currentTab == TAB_DAY) {
+            displayStr = String.format(Locale.getDefault(), "%02d/%02d/%04d",
+                    selectedDay, selectedMonth + 1, selectedYear);
+        } else if (currentTab == TAB_YEAR) {
             displayStr = String.format(Locale.getDefault(), "Năm %04d", selectedYear);
         } else {
             displayStr = String.format(Locale.getDefault(), "Tháng %02d/%04d", selectedMonth + 1, selectedYear);
@@ -307,11 +422,28 @@ public class StatisticFragment extends Fragment {
     }
 
     /**
-     * Mở hộp thoại chọn chỉ Tháng & Năm (không hiện lịch ngày)
+     * Mở hộp thoại chọn Ngày (DatePickerDialog) hoặc Tháng/Năm (NumberPicker)
      */
     private void setupMonthYearPicker() {
         cardDateRangePicker.setOnClickListener(v -> {
             if (getContext() == null) return;
+
+            if (currentTab == TAB_DAY) {
+                new DatePickerDialog(
+                        getContext(),
+                        (view, year, month, dayOfMonth) -> {
+                            selectedYear = year;
+                            selectedMonth = month;
+                            selectedDay = dayOfMonth;
+                            updateDateRangeDisplay();
+                            loadStatisticData();
+                        },
+                        selectedYear,
+                        selectedMonth,
+                        selectedDay
+                ).show();
+                return;
+            }
 
             float density = getResources().getDisplayMetrics().density;
             int pad = Math.round(16 * density);
@@ -384,6 +516,7 @@ public class StatisticFragment extends Fragment {
                             selectedMonth = npMonth.getValue() - 1;
                         }
                         selectedYear = npYear.getValue();
+                        clampSelectedDay();
                         updateDateRangeDisplay();
                         loadStatisticData();
                     })
@@ -466,6 +599,7 @@ public class StatisticFragment extends Fragment {
                     summary.name,
                     summary.totalAmount,
                     percentage,
+                    summary.transactionCount,
                     summary.transactionCount + " giao dịch",
                     emoji,
                     color,
@@ -508,6 +642,11 @@ public class StatisticFragment extends Fragment {
         }
 
         CategoryDetailItem top = allCategoryItems.get(0);
+        for (CategoryDetailItem item : allCategoryItems) {
+            if (item.amount > top.amount) {
+                top = item;
+            }
+        }
         if (isExpenseMode) {
             tvAdviceText.setText(String.format(Locale.getDefault(),
                     "Danh mục %s đang chiếm %d%% tổng chi tiêu (%s). Hãy theo dõi sát để cân đối ngân sách!",
@@ -522,6 +661,10 @@ public class StatisticFragment extends Fragment {
     }
 
     private String getCurrentDatePrefix() {
+        if (currentTab == TAB_DAY) {
+            return String.format(Locale.getDefault(), "%04d-%02d-%02d",
+                    selectedYear, selectedMonth + 1, selectedDay);
+        }
         if (currentTab == TAB_YEAR) {
             return String.format(Locale.getDefault(), "%04d", selectedYear);
         }
@@ -529,6 +672,13 @@ public class StatisticFragment extends Fragment {
     }
 
     private String getPreviousDatePrefix() {
+        if (currentTab == TAB_DAY) {
+            Calendar cal = Calendar.getInstance();
+            cal.set(selectedYear, selectedMonth, selectedDay);
+            cal.add(Calendar.DAY_OF_MONTH, -1);
+            return String.format(Locale.getDefault(), "%04d-%02d-%02d",
+                    cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH));
+        }
         if (currentTab == TAB_YEAR) {
             return String.format(Locale.getDefault(), "%04d", selectedYear - 1);
         }
@@ -598,16 +748,18 @@ public class StatisticFragment extends Fragment {
         final String name;
         final double amount;
         final int percentage;
+        final int txCount;
         final String transactionCount;
         final String iconEmoji;
         final int color;
         final int iconBgColor;
 
-        CategoryDetailItem(String name, double amount, int percentage, String transactionCount,
-                           String iconEmoji, int color, int iconBgColor) {
+        CategoryDetailItem(String name, double amount, int percentage, int txCount,
+                           String transactionCount, String iconEmoji, int color, int iconBgColor) {
             this.name = name;
             this.amount = amount;
             this.percentage = percentage;
+            this.txCount = txCount;
             this.transactionCount = transactionCount;
             this.iconEmoji = iconEmoji;
             this.color = color;
