@@ -32,10 +32,13 @@ public class LoginActivity extends AppCompatActivity {
         sessionManager = new SessionManager(this);
         userDAO = new UserDAO(this);
 
-        // Kiểm tra phiên đăng nhập tự động
+        // Kiểm tra phiên đăng nhập tự động (xác thực user vẫn tồn tại trong DB)
         if (sessionManager.isLoggedIn()) {
-            navigateToMain();
-            return;
+            if (userDAO.getUserById(sessionManager.getUserId()) != null) {
+                navigateToMain();
+                return;
+            }
+            sessionManager.logout();
         }
 
         edtUsername = findViewById(R.id.edtUsername);
