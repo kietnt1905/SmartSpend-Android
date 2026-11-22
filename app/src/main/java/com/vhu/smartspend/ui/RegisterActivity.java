@@ -4,8 +4,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,8 +16,6 @@ import com.vhu.smartspend.model.User;
 public class RegisterActivity extends AppCompatActivity {
 
     private EditText edtFullName, edtUsername, edtPassword, edtConfirmPassword;
-    private RadioGroup rgRole;
-    private RadioButton rbUser, rbAdmin;
     private Button btnRegister;
     private TextView btnToLogin;
 
@@ -36,9 +32,6 @@ public class RegisterActivity extends AppCompatActivity {
         edtUsername = findViewById(R.id.edtUsername);
         edtPassword = findViewById(R.id.edtPassword);
         edtConfirmPassword = findViewById(R.id.edtConfirmPassword);
-        rgRole = findViewById(R.id.rgRole);
-        rbUser = findViewById(R.id.rbUser);
-        rbAdmin = findViewById(R.id.rbAdmin);
         btnRegister = findViewById(R.id.btnRegister);
         btnToLogin = findViewById(R.id.btnToLogin);
 
@@ -85,11 +78,8 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        // Lấy vai trò được chọn
-        String role = rbAdmin.isChecked() ? "ADMIN" : "USER";
-
-        User newUsers = new User(username, password, fullName, role, 5000000);
-        boolean isSuccess = userDAO.registerUser(newUsers);
+        User newUser = new User(username, password, fullName, 5000000);
+        boolean isSuccess = userDAO.registerUser(newUser);
 
         if (isSuccess) {
             Toast.makeText(this, "Đăng ký thành công! Vui lòng đăng nhập.", Toast.LENGTH_SHORT).show();

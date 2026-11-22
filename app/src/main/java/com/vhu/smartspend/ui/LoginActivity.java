@@ -74,7 +74,7 @@ public class LoginActivity extends AppCompatActivity {
             // Lưu phiên đăng nhập vào SharedPreferences
             sessionManager.createLoginSession(user);
 
-            Toast.makeText(this, "Đăng nhập thành công! Quyền: " + user.getRole(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
 
             // Truyền dữ liệu sang MainActivity bằng Intent
             navigateToMain();
@@ -88,7 +88,6 @@ public class LoginActivity extends AppCompatActivity {
         intent.putExtra("user_id", sessionManager.getUserId());
         intent.putExtra("username", sessionManager.getUsername());
         intent.putExtra("full_name", sessionManager.getFullName());
-        intent.putExtra("role", sessionManager.getRole());
         startActivity(intent);
         finish();
     }

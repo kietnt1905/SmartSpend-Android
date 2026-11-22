@@ -64,39 +64,7 @@
             android:minHeight="48dp"
             android:padding="12dp"
             android:background="@android:drawable/editbox_background"
-            android:layout_marginBottom="16dp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Phân quyền tài khoản:"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="#616161"
-            android:layout_marginBottom="4dp"/>
-
-        <RadioGroup
-            android:id="@+id/rgRole"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="24dp">
-
-            <RadioButton
-                android:id="@+id/rbUser"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Người dùng (USER)"
-                android:checked="true"/>
-
-            <RadioButton
-                android:id="@+id/rbAdmin"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Quản trị (ADMIN)"/>
-        </RadioGroup>
+            android:layout_marginBottom="24dp"/>
 
         <Button
             android:id="@+id/btnRegister"

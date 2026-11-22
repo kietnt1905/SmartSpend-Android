@@ -19,11 +19,12 @@ public class CategoryDAO {
     }
 
     /**
-     * Thêm danh mục mới vào SQLite
+     * Thêm danh mục mới vào SQLite theo userId
      */
     public long insertCategory(Category category) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put("user_id", category.getUserId());
         values.put("name", category.getName());
         values.put("type", category.getType());
         values.put("icon_name", category.getIconName());
@@ -32,7 +33,7 @@ public class CategoryDAO {
     }
 
     /**
-     * Cập nhật thông tin danh mục
+     * Cập nhật thông tin danh mục của đúng người dùng
      */
     public int updateCategory(Category category) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
@@ -42,17 +43,22 @@ public class CategoryDAO {
         values.put("icon_name", category.getIconName());
         values.put("color_code", category.getColorCode());
 
-        return db.update("categories", values, "category_id = ?", new String[]{String.valueOf(category.getCategoryId())});
+        return db.update(
+                "categories",
+                values,
+                "category_id = ? AND user_id = ?",
+                new String[]{String.valueOf(category.getCategoryId()), String.valueOf(category.getUserId())}
+        );
     }
 
     /**
-     * Kiểm tra tên danh mục đã tồn tại trong cùng loại Thu/Chi chưa
+     * Kiểm tra tên danh mục đã tồn tại trong cùng loại Thu/Chi của người dùng chưa
      */
-    public boolean existsCategoryName(String name, String type, int excludeCategoryId) {
+    public boolean existsCategoryName(int userId, String name, String type, int excludeCategoryId) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.rawQuery(
-                "SELECT COUNT(*) FROM categories WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) AND type = ? AND category_id != ?",
-                new String[]{name, type, String.valueOf(excludeCategoryId)}
+                "SELECT COUNT(*) FROM categories WHERE user_id = ? AND LOWER(TRIM(name)) = LOWER(TRIM(?)) AND type = ? AND category_id != ?",
+                new String[]{String.valueOf(userId), name, type, String.valueOf(excludeCategoryId)}
         );
         boolean exists = false;
         if (cursor != null) {
@@ -84,34 +90,42 @@ public class CategoryDAO {
     }
 
     /**
-     * Xóa danh mục theo ID (trả về -1 nếu bị ràng buộc khóa ngoại)
+     * Xóa danh mục theo ID và userId (trả về -1 nếu bị ràng buộc khóa ngoại)
      */
-    public int deleteCategory(int categoryId) {
+    public int deleteCategory(int categoryId, int userId) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         try {
-            return db.delete("categories", "category_id = ?", new String[]{String.valueOf(categoryId)});
+            return db.delete(
+                    "categories",
+                    "category_id = ? AND user_id = ?",
+                    new String[]{String.valueOf(categoryId), String.valueOf(userId)}
+            );
         } catch (SQLiteConstraintException e) {
             return -1;
         }
     }
 
     /**
-     * Lấy toàn bộ danh sách danh mục
+     * Lấy toàn bộ danh sách danh mục của người dùng
      */
-    public List<Category> getAllCategories() {
+    public List<Category> getAllCategories(int userId) {
         List<Category> list = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT category_id, name, type, icon_name, color_code FROM categories ORDER BY category_id DESC", null);
+        Cursor cursor = db.rawQuery(
+                "SELECT category_id, user_id, name, type, icon_name, color_code FROM categories WHERE user_id = ? ORDER BY category_id DESC",
+                new String[]{String.valueOf(userId)}
+        );
 
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 int id = cursor.getInt(cursor.getColumnIndexOrThrow("category_id"));
+                int uId = cursor.getInt(cursor.getColumnIndexOrThrow("user_id"));
                 String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
                 String type = cursor.getString(cursor.getColumnIndexOrThrow("type"));
                 String iconName = cursor.getString(cursor.getColumnIndexOrThrow("icon_name"));
                 String colorCode = cursor.getString(cursor.getColumnIndexOrThrow("color_code"));
 
-                list.add(new Category(id, name, type, iconName, colorCode));
+                list.add(new Category(id, uId, name, type, iconName, colorCode));
             }
             cursor.close();
         }
@@ -119,25 +133,26 @@ public class CategoryDAO {
     }
 
     /**
-     * Lấy danh sách danh mục theo loại (EXPENSE / INCOME)
+     * Lấy danh sách danh mục theo loại (EXPENSE / INCOME) của người dùng
      */
-    public List<Category> getCategoriesByType(String type) {
+    public List<Category> getCategoriesByType(int userId, String type) {
         List<Category> list = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.rawQuery(
-                "SELECT category_id, name, type, icon_name, color_code FROM categories WHERE type = ? ORDER BY category_id DESC",
-                new String[]{type}
+                "SELECT category_id, user_id, name, type, icon_name, color_code FROM categories WHERE user_id = ? AND type = ? ORDER BY category_id DESC",
+                new String[]{String.valueOf(userId), type}
         );
 
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 int id = cursor.getInt(cursor.getColumnIndexOrThrow("category_id"));
+                int uId = cursor.getInt(cursor.getColumnIndexOrThrow("user_id"));
                 String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
                 String cType = cursor.getString(cursor.getColumnIndexOrThrow("type"));
                 String iconName = cursor.getString(cursor.getColumnIndexOrThrow("icon_name"));
                 String colorCode = cursor.getString(cursor.getColumnIndexOrThrow("color_code"));
 
-                list.add(new Category(id, name, cType, iconName, colorCode));
+                list.add(new Category(id, uId, name, cType, iconName, colorCode));
             }
             cursor.close();
         }
@@ -151,18 +166,19 @@ public class CategoryDAO {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Category category = null;
         Cursor cursor = db.rawQuery(
-                "SELECT category_id, name, type, icon_name, color_code FROM categories WHERE category_id = ?",
+                "SELECT category_id, user_id, name, type, icon_name, color_code FROM categories WHERE category_id = ?",
                 new String[]{String.valueOf(categoryId)}
         );
 
         if (cursor != null) {
             if (cursor.moveToFirst()) {
+                int uId = cursor.getInt(cursor.getColumnIndexOrThrow("user_id"));
                 String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
                 String type = cursor.getString(cursor.getColumnIndexOrThrow("type"));
                 String iconName = cursor.getString(cursor.getColumnIndexOrThrow("icon_name"));
                 String colorCode = cursor.getString(cursor.getColumnIndexOrThrow("color_code"));
 
-                category = new Category(categoryId, name, type, iconName, colorCode);
+                category = new Category(categoryId, uId, name, type, iconName, colorCode);
             }
             cursor.close();
         }

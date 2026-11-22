@@ -29,7 +29,7 @@ import java.util.Locale;
 
 public class SettingFragment extends Fragment {
 
-    private TextView tvUserFullName, tvUsername, tvUserRole, tvRoleBadge, tvMonthlyLimit;
+    private TextView tvUserFullName, tvUsername, tvMonthlyLimit;
     private View btnManageCategory, btnExportCsv, btnLogout;
     private View rowMonthlyLimit;
 
@@ -52,8 +52,6 @@ public class SettingFragment extends Fragment {
 
         tvUserFullName = view.findViewById(R.id.tvUserFullName);
         tvUsername = view.findViewById(R.id.tvUsername);
-        tvUserRole = view.findViewById(R.id.tvUserRole);
-        tvRoleBadge = view.findViewById(R.id.tvRoleBadge);
         tvMonthlyLimit = view.findViewById(R.id.tvMonthlyLimit);
 
         rowMonthlyLimit = view.findViewById(R.id.rowMonthlyLimit);
@@ -89,12 +87,9 @@ public class SettingFragment extends Fragment {
     private void bindUserInfo() {
         String fullName = sessionManager.getFullName();
         String username = sessionManager.getUsername();
-        String role = sessionManager.getRole();
 
         tvUserFullName.setText(!fullName.isEmpty() ? fullName : "Người dùng");
         tvUsername.setText(!username.isEmpty() ? "@" + username : "@smartspend");
-        tvUserRole.setText("Quyền hạn: " + role);
-        tvRoleBadge.setText("TÀI KHOẢN " + role.toUpperCase(Locale.getDefault()));
     }
 
     private void loadMonthlyLimit() {

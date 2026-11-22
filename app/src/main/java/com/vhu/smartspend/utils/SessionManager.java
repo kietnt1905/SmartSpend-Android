@@ -11,7 +11,6 @@ public class SessionManager {
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_USERNAME = "username";
     private static final String KEY_FULL_NAME = "full_name";
-    private static final String KEY_ROLE = "role";
 
     private final SharedPreferences sharedPreferences;
     private final SharedPreferences.Editor editor;
@@ -30,7 +29,6 @@ public class SessionManager {
         editor.putInt(KEY_USER_ID, user.getUserId());
         editor.putString(KEY_USERNAME, user.getUsername());
         editor.putString(KEY_FULL_NAME, user.getFullName());
-        editor.putString(KEY_ROLE, user.getRole() != null ? user.getRole() : "USER");
         editor.apply();
     }
 
@@ -60,13 +58,6 @@ public class SessionManager {
      */
     public String getFullName() {
         return sharedPreferences.getString(KEY_FULL_NAME, "");
-    }
-
-    /**
-     * Lấy Vai trò (ADMIN/USER)
-     */
-    public String getRole() {
-        return sharedPreferences.getString(KEY_ROLE, "USER");
     }
 
     /**
