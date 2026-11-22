@@ -337,11 +337,13 @@
         <androidx.appcompat.widget.SearchView
             android:id="@+id/svTransactionSearch"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
+            android:layout_height="44dp"
             android:layout_marginBottom="12dp"
             android:background="@drawable/bg_search_view"
             app:iconifiedByDefault="false"
-            app:queryHint="Tìm kiếm danh mục/giao dịch..." />
+            app:queryBackground="@android:color/transparent"
+            app:queryHint="Tìm kiếm danh mục/giao dịch..."
+            app:submitBackground="@android:color/transparent" />
 
         <!-- Empty State -->
         <TextView
