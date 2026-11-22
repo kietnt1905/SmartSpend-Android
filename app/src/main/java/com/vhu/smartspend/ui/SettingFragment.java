@@ -16,7 +16,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 
 import com.vhu.smartspend.R;
@@ -31,7 +30,6 @@ import java.util.Locale;
 public class SettingFragment extends Fragment {
 
     private TextView tvUserFullName, tvUsername, tvUserRole, tvRoleBadge, tvMonthlyLimit;
-    private SwitchCompat swAuto503020;
     private View btnManageCategory, btnExportCsv, btnLogout;
     private View rowMonthlyLimit;
 
@@ -58,8 +56,6 @@ public class SettingFragment extends Fragment {
         tvRoleBadge = view.findViewById(R.id.tvRoleBadge);
         tvMonthlyLimit = view.findViewById(R.id.tvMonthlyLimit);
 
-        swAuto503020 = view.findViewById(R.id.swAuto503020);
-
         rowMonthlyLimit = view.findViewById(R.id.rowMonthlyLimit);
         btnManageCategory = view.findViewById(R.id.btnManageCategory);
         btnExportCsv = view.findViewById(R.id.btnExportCsv);
@@ -67,12 +63,6 @@ public class SettingFragment extends Fragment {
 
         bindUserInfo();
         loadMonthlyLimit();
-
-        swAuto503020.setOnCheckedChangeListener((buttonView, isChecked) ->
-                Toast.makeText(requireContext(),
-                        isChecked ? "Đã bật gợi ý phân bổ 50/30/20" : "Đã tắt gợi ý phân bổ 50/30/20",
-                        Toast.LENGTH_SHORT).show()
-        );
 
         rowMonthlyLimit.setOnClickListener(v -> showEditMonthlyLimitDialog());
 
