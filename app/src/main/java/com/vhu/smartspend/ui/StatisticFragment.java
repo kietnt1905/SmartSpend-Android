@@ -8,7 +8,6 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,22 +28,17 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.card.MaterialCardView;
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.database.BudgetDAO;
 import com.vhu.smartspend.model.Category;
-import com.vhu.smartspend.model.Transaction;
 import com.vhu.smartspend.utils.CurrencyUtils;
-import com.vhu.smartspend.utils.DateUtils;
 
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * Màn hình Thống kê Thu / Chi (StatisticFragment)
@@ -85,9 +79,6 @@ public class StatisticFragment extends Fragment {
     // Data
     private List<CategoryDetailItem> allCategoryItems = new ArrayList<>();
     private CategoryAdapter categoryAdapter;
-    private BottomSheetDialog activeCategorySheet;
-    private View activeSheetView;
-    private CategoryDetailItem activeSheetItem;
 
     // Database & Calendar
     private BudgetDAO budgetDAO;
@@ -148,10 +139,6 @@ public class StatisticFragment extends Fragment {
         super.onResume();
         if (budgetDAO != null) {
             loadStatisticData();
-            if (activeCategorySheet != null && activeCategorySheet.isShowing()
-                    && activeSheetView != null && activeSheetItem != null) {
-                bindCategoryTransactionsSheet(activeSheetView, activeSheetItem);
-            }
         }
     }
 
@@ -264,7 +251,7 @@ public class StatisticFragment extends Fragment {
         } else {
             tvEmptyState.setVisibility(View.GONE);
             rvCategorySpending.setVisibility(View.VISIBLE);
-            categoryAdapter = new CategoryAdapter(filteredList, currentType == TYPE_EXPENSE, this::openCategoryTransactionsSheet);
+            categoryAdapter = new CategoryAdapter(filteredList, currentType == TYPE_EXPENSE, this::openCategoryTransactionsScreen);
             rvCategorySpending.setAdapter(categoryAdapter);
         }
     }
@@ -731,146 +718,18 @@ public class StatisticFragment extends Fragment {
         }
     }
 
-    private void openCategoryTransactionsSheet(CategoryDetailItem item) {
-        if (getContext() == null || budgetDAO == null) return;
-        if (activeCategorySheet != null && activeCategorySheet.isShowing()) {
-            activeCategorySheet.dismiss();
-        }
-
-        View sheetView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_category_transactions, null);
-        BottomSheetDialog dialog = new BottomSheetDialog(getContext());
-        dialog.setContentView(sheetView);
-        dialog.setOnShowListener(d -> {
-            View bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
-            if (bottomSheet != null) {
-                bottomSheet.setBackgroundColor(Color.TRANSPARENT);
-            }
-        });
-        dialog.setOnDismissListener(d -> {
-            activeCategorySheet = null;
-            activeSheetView = null;
-            activeSheetItem = null;
-        });
-
-        activeCategorySheet = dialog;
-        activeSheetView = sheetView;
-        activeSheetItem = item;
-        bindCategoryTransactionsSheet(sheetView, item);
-        dialog.show();
-    }
-
-    private void bindCategoryTransactionsSheet(View sheetView, CategoryDetailItem item) {
-        if (getContext() == null || budgetDAO == null) return;
-
-        TextView tvCatIcon = sheetView.findViewById(R.id.tvSheetCatIcon);
-        TextView tvCatName = sheetView.findViewById(R.id.tvSheetCatName);
-        TextView tvCatSub = sheetView.findViewById(R.id.tvSheetCatSub);
-        TextView tvCatTotal = sheetView.findViewById(R.id.tvSheetCatTotal);
-        LinearLayout layoutList = sheetView.findViewById(R.id.layoutSheetTransactions);
-        TextView tvEmpty = sheetView.findViewById(R.id.tvSheetEmpty);
-
-        float d = getResources().getDisplayMetrics().density;
-        GradientDrawable catCircle = new GradientDrawable();
-        catCircle.setShape(GradientDrawable.OVAL);
-        catCircle.setColor(item.iconBgColor);
-        catCircle.setStroke(Math.round(2 * d), item.color);
-        tvCatIcon.setBackground(catCircle);
-        tvCatIcon.setText(item.iconEmoji);
-        tvCatName.setText(item.name);
-
-        boolean isExpenseMode = (currentType == TYPE_EXPENSE);
-        List<Transaction> transactions = budgetDAO.getTransactionsByCategoryAndDatePrefix(
-                getCurrentUserId(), item.categoryId, getCurrentDatePrefix());
-
-        double total = 0;
-        for (Transaction tx : transactions) {
-            total += tx.getAmount();
-        }
-
-        String periodText = tvDateRangeDisplay.getText().toString();
-        tvCatSub.setText(periodText + " • " + transactions.size() + " giao dịch");
-        String prefix = isExpenseMode ? "-" : "+";
-        tvCatTotal.setText(transactions.isEmpty() ? "0 đ" : prefix + CurrencyUtils.formatVND(total));
-        tvCatTotal.setTextColor(Color.parseColor(isExpenseMode ? "#B91C1C" : "#047857"));
-        tvCatTotal.setBackgroundResource(isExpenseMode ? R.drawable.bg_tx_amount_expense : R.drawable.bg_tx_amount_income);
-
-        layoutList.removeAllViews();
-        if (transactions.isEmpty()) {
-            tvEmpty.setVisibility(View.VISIBLE);
-            return;
-        }
-        tvEmpty.setVisibility(View.GONE);
-
-        // Nhóm giao dịch theo từng ngày (đã sort mới nhất lên đầu từ SQL)
-        Map<String, List<Transaction>> groupedByDate = new LinkedHashMap<>();
-        for (Transaction tx : transactions) {
-            String dateKey = !TextUtils.isEmpty(tx.getTransactionDate()) ? tx.getTransactionDate() : "";
-            List<Transaction> dayList = groupedByDate.get(dateKey);
-            if (dayList == null) {
-                dayList = new ArrayList<>();
-                groupedByDate.put(dateKey, dayList);
-            }
-            dayList.add(tx);
-        }
-
-        LayoutInflater inflater = LayoutInflater.from(getContext());
-        for (Map.Entry<String, List<Transaction>> entry : groupedByDate.entrySet()) {
-            List<Transaction> dayList = entry.getValue();
-            double dayTotal = 0;
-            for (Transaction tx : dayList) {
-                dayTotal += tx.getAmount();
-            }
-
-            View headerView = inflater.inflate(R.layout.item_tx_date_header, layoutList, false);
-            TextView tvDateLabel = headerView.findViewById(R.id.tvDateGroupLabel);
-            TextView tvDateTotal = headerView.findViewById(R.id.tvDateGroupTotal);
-            tvDateLabel.setText("Ngày " + DateUtils.formatToDisplay(entry.getKey()));
-            tvDateTotal.setText(prefix + CurrencyUtils.formatVND(dayTotal));
-            tvDateTotal.setTextColor(Color.parseColor(isExpenseMode ? "#B91C1C" : "#047857"));
-            layoutList.addView(headerView);
-
-            for (Transaction tx : dayList) {
-                boolean txIncome = Category.TYPE_INCOME.equalsIgnoreCase(tx.getCategoryType());
-                View row = inflater.inflate(R.layout.item_recent_transaction, layoutList, false);
-                if (row instanceof MaterialCardView) {
-                    ((MaterialCardView) row).setCardBackgroundColor(Color.WHITE);
-                }
-
-                TextView tvIcon = row.findViewById(R.id.tvTxIcon);
-                TextView tvTitle = row.findViewById(R.id.tvTxTitle);
-                TextView tvSub = row.findViewById(R.id.tvTxSub);
-                TextView tvAmount = row.findViewById(R.id.tvTxAmount);
-
-                int borderColor = parseColorSafe(tx.getCategoryColorCode(), txIncome ? "#0A5C36" : "#C62828");
-                GradientDrawable circle = new GradientDrawable();
-                circle.setShape(GradientDrawable.OVAL);
-                circle.setColor(adjustAlpha(borderColor, 0.14f));
-                circle.setStroke(Math.round(2 * d), borderColor);
-                tvIcon.setBackground(circle);
-                tvIcon.setText(mapIconEmoji(tx.getCategoryIconName()));
-
-                String displayTitle = !TextUtils.isEmpty(tx.getNote())
-                        ? tx.getNote()
-                        : (!TextUtils.isEmpty(tx.getTitle()) ? tx.getTitle() : item.name);
-                tvTitle.setText(displayTitle);
-                tvSub.setText("Chạm để chỉnh sửa • " + DateUtils.formatToDisplay(tx.getTransactionDate()));
-                tvSub.setTextColor(Color.parseColor("#0A6847"));
-
-                tvAmount.setText((txIncome ? "+" : "-") + CurrencyUtils.formatVND(tx.getAmount()));
-                tvAmount.setTextColor(Color.parseColor(txIncome ? "#047857" : "#B91C1C"));
-                tvAmount.setBackgroundResource(txIncome ? R.drawable.bg_tx_amount_income : R.drawable.bg_tx_amount_expense);
-
-                row.setOnClickListener(v -> {
-                    if (getActivity() != null) {
-                        Intent intent = new Intent(getActivity(), AddEditTransactionActivity.class);
-                        intent.putExtra("transaction_id", tx.getTransactionId());
-                        startActivity(intent);
-                    }
-                });
-
-                layoutList.addView(row);
-            }
-        }
+    private void openCategoryTransactionsScreen(CategoryDetailItem item) {
+        if (getActivity() == null) return;
+        Intent intent = new Intent(getActivity(), CategoryTransactionsActivity.class);
+        intent.putExtra(CategoryTransactionsActivity.EXTRA_CATEGORY_ID, item.categoryId);
+        intent.putExtra(CategoryTransactionsActivity.EXTRA_CATEGORY_NAME, item.name);
+        intent.putExtra(CategoryTransactionsActivity.EXTRA_CATEGORY_ICON_EMOJI, item.iconEmoji);
+        intent.putExtra(CategoryTransactionsActivity.EXTRA_CATEGORY_COLOR, item.color);
+        intent.putExtra(CategoryTransactionsActivity.EXTRA_CATEGORY_BG_COLOR, item.iconBgColor);
+        intent.putExtra(CategoryTransactionsActivity.EXTRA_DATE_PREFIX, getCurrentDatePrefix());
+        intent.putExtra(CategoryTransactionsActivity.EXTRA_PERIOD_DISPLAY, tvDateRangeDisplay.getText().toString());
+        intent.putExtra(CategoryTransactionsActivity.EXTRA_IS_EXPENSE, currentType == TYPE_EXPENSE);
+        startActivity(intent);
     }
 
     // =========================================================================
