@@ -2,7 +2,6 @@ package com.vhu.smartspend.adapter;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +11,7 @@ import android.widget.TextView;
 import com.google.android.material.card.MaterialCardView;
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.model.Category;
+import com.vhu.smartspend.utils.CategoryUiHelper;
 
 import java.util.List;
 
@@ -52,122 +52,33 @@ public class CategoryGridAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        ViewHolder holder;
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(R.layout.item_category_grid, parent, false);
-            holder = new ViewHolder(convertView);
-            convertView.setTag(holder);
-        } else {
-            holder = (ViewHolder) convertView.getTag();
         }
 
         Category category = categoryList.get(position);
-        if (category != null) {
-            holder.tvName.setText(category.getName());
+        if (category == null) return convertView;
 
-            int borderColor = parseColor(category.getColorCode());
-            GradientDrawable circle = new GradientDrawable();
-            circle.setShape(GradientDrawable.OVAL);
-            circle.setColor(Color.argb(32, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
-            circle.setStroke(dpToPx(2), borderColor);
-            holder.tvIconCircle.setBackground(circle);
-            holder.tvIconCircle.setText(getIconSymbol(category.getIconName(), category.getName()));
+        MaterialCardView card = convertView.findViewById(R.id.cardCategoryItem);
+        TextView tvIcon = convertView.findViewById(R.id.tvCategoryIconCircle);
+        TextView tvName = convertView.findViewById(R.id.tvCategoryName);
+        TextView tvType = convertView.findViewById(R.id.tvCategoryType);
 
-            boolean isSelected = category.getCategoryId() == selectedCategoryId;
-            holder.card.setCardBackgroundColor(isSelected
-                    ? Color.argb(28, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor))
-                    : Color.WHITE);
-            holder.card.setStrokeWidth(dpToPx(isSelected ? 2 : 1));
-            holder.card.setStrokeColor(isSelected
-                    ? borderColor
-                    : Color.argb(90, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
+        int borderColor = CategoryUiHelper.parseColor(category.getColorCode(), "#0A5C36");
+        tvName.setText(category.getName());
+        tvIcon.setBackground(CategoryUiHelper.createCircleBg(context, borderColor, 2));
+        tvIcon.setText(CategoryUiHelper.getEmoji(category.getIconName()));
 
-            boolean isIncome = Category.TYPE_INCOME.equalsIgnoreCase(category.getType());
-            holder.tvType.setBackgroundResource(isIncome ? R.drawable.bg_cat_type_income : R.drawable.bg_cat_type_expense);
-            holder.tvType.setText(isIncome ? "Thu nhập" : "Chi tiêu");
-            holder.tvType.setTextColor(Color.parseColor(isIncome ? "#15803D" : "#B91C1C"));
-        }
+        boolean isSelected = category.getCategoryId() == selectedCategoryId;
+        card.setCardBackgroundColor(isSelected ? CategoryUiHelper.withAlpha(borderColor, 28) : Color.WHITE);
+        card.setStrokeWidth(CategoryUiHelper.dp(context, isSelected ? 2 : 1));
+        card.setStrokeColor(isSelected ? borderColor : CategoryUiHelper.withAlpha(borderColor, 90));
+
+        boolean isIncome = Category.TYPE_INCOME.equalsIgnoreCase(category.getType());
+        tvType.setBackgroundResource(isIncome ? R.drawable.bg_cat_type_income : R.drawable.bg_cat_type_expense);
+        tvType.setText(isIncome ? "Thu nhập" : "Chi tiêu");
+        tvType.setTextColor(Color.parseColor(isIncome ? "#15803D" : "#B91C1C"));
 
         return convertView;
-    }
-
-    private int parseColor(String colorCode) {
-        if (colorCode != null && !colorCode.trim().isEmpty()) {
-            try {
-                return Color.parseColor(colorCode);
-            } catch (Exception ignored) {
-            }
-        }
-        return Color.parseColor("#0A5C36");
-    }
-
-    private String getIconSymbol(String iconName, String categoryName) {
-        if (iconName != null) {
-            switch (iconName.toLowerCase()) {
-                case "ic_food":
-                    return "🍔";
-                case "ic_coffee":
-                    return "☕";
-                case "ic_school":
-                    return "📚";
-                case "ic_shopping":
-                    return "🛒";
-                case "ic_transport":
-                    return "🚗";
-                case "ic_home":
-                    return "🏠";
-                case "ic_bill":
-                    return "⚡";
-                case "ic_entertainment":
-                    return "🎮";
-                case "ic_health":
-                    return "💊";
-                case "ic_beauty":
-                    return "💄";
-                case "ic_travel":
-                    return "✈️";
-                case "ic_pet":
-                    return "🐾";
-                case "ic_sport":
-                    return "🏋️";
-                case "ic_phone":
-                    return "📱";
-                case "ic_gift":
-                    return "🎁";
-                case "ic_award":
-                    return "🎓";
-                case "ic_work":
-                    return "💼";
-                case "ic_savings":
-                    return "💰";
-                case "ic_invest":
-                    return "📈";
-                case "ic_other":
-                    return "⭐";
-            }
-        }
-        if (categoryName != null && !categoryName.trim().isEmpty()) {
-            return categoryName.trim().substring(0, 1).toUpperCase();
-        }
-        return "⭐";
-    }
-
-    private int dpToPx(int dp) {
-        float density = context.getResources().getDisplayMetrics().density;
-        return Math.round(dp * density);
-    }
-
-    private static class ViewHolder {
-        final MaterialCardView card;
-        final TextView tvIconCircle;
-        final TextView tvName;
-        final TextView tvType;
-
-        ViewHolder(View itemView) {
-            card = itemView.findViewById(R.id.cardCategoryItem);
-            tvIconCircle = itemView.findViewById(R.id.tvCategoryIconCircle);
-            tvName = itemView.findViewById(R.id.tvCategoryName);
-            tvType = itemView.findViewById(R.id.tvCategoryType);
-        }
     }
 }

@@ -6,6 +6,8 @@
         <item name="colorSurface">@color/setting_card</item>
         <item name="android:statusBarColor">@color/setting_bg</item>
         <item name="android:navigationBarColor">@color/setting_card</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
     </style>
 
     <style name="Theme.SmartSpend" parent="Base.Theme.SmartSpend" />

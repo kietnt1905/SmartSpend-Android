@@ -46,24 +46,28 @@ public class TransactionDAO {
     }
 
     public Transaction getTransactionById(int transactionId) {
-        List<Transaction> list = queryTransactions(
-                SELECT_TX + "WHERE t.transaction_id = ?",
-                new String[]{String.valueOf(transactionId)});
-        return list.isEmpty() ? null : list.get(0);
-    }
-
-    public List<Transaction> getTransactionsByUser(int userId) {
-        return queryTransactions(
-                SELECT_TX + "WHERE t.user_id = ? ORDER BY t.transaction_date DESC, t.transaction_id DESC",
-                new String[]{String.valueOf(userId)});
-    }
-
-    public List<Transaction> searchTransactions(int userId, String keyword) {
-        String like = "%" + (keyword != null ? keyword.trim() : "") + "%";
-        return queryTransactions(
-                SELECT_TX + "WHERE t.user_id = ? AND (t.title LIKE ? OR t.note LIKE ? OR c.name LIKE ?) " +
-                "ORDER BY t.transaction_date DESC, t.transaction_id DESC",
-                new String[]{String.valueOf(userId), like, like, like});
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase();
+             Cursor c = db.rawQuery(SELECT_TX + "WHERE t.transaction_id = ?",
+                     new String[]{String.valueOf(transactionId)})) {
+            if (c.moveToFirst()) {
+                Transaction t = new Transaction(
+                        c.getInt(c.getColumnIndexOrThrow("transaction_id")),
+                        c.getInt(c.getColumnIndexOrThrow("user_id")),
+                        c.getInt(c.getColumnIndexOrThrow("category_id")),
+                        c.getString(c.getColumnIndexOrThrow("title")),
+                        c.getDouble(c.getColumnIndexOrThrow("amount")),
+                        c.getString(c.getColumnIndexOrThrow("transaction_date")),
+                        c.getString(c.getColumnIndexOrThrow("note")),
+                        c.getString(c.getColumnIndexOrThrow("receipt_uri"))
+                );
+                t.setCategoryName(c.getString(c.getColumnIndexOrThrow("category_name")));
+                t.setCategoryType(c.getString(c.getColumnIndexOrThrow("category_type")));
+                t.setCategoryIconName(c.getString(c.getColumnIndexOrThrow("category_icon_name")));
+                t.setCategoryColorCode(c.getString(c.getColumnIndexOrThrow("category_color_code")));
+                return t;
+            }
+        }
+        return null;
     }
 
     public List<Category> getCategoriesByType(int userId, String type) {
@@ -87,31 +91,6 @@ public class TransactionDAO {
         cv.put("note", t.getNote());
         cv.put("receipt_uri", t.getReceiptUri());
         return cv;
-    }
-
-    private List<Transaction> queryTransactions(String sql, String[] args) {
-        List<Transaction> list = new ArrayList<>();
-        try (SQLiteDatabase db = dbHelper.getReadableDatabase();
-             Cursor c = db.rawQuery(sql, args)) {
-            while (c.moveToNext()) {
-                Transaction t = new Transaction(
-                        c.getInt(c.getColumnIndexOrThrow("transaction_id")),
-                        c.getInt(c.getColumnIndexOrThrow("user_id")),
-                        c.getInt(c.getColumnIndexOrThrow("category_id")),
-                        c.getString(c.getColumnIndexOrThrow("title")),
-                        c.getDouble(c.getColumnIndexOrThrow("amount")),
-                        c.getString(c.getColumnIndexOrThrow("transaction_date")),
-                        c.getString(c.getColumnIndexOrThrow("note")),
-                        c.getString(c.getColumnIndexOrThrow("receipt_uri"))
-                );
-                t.setCategoryName(c.getString(c.getColumnIndexOrThrow("category_name")));
-                t.setCategoryType(c.getString(c.getColumnIndexOrThrow("category_type")));
-                t.setCategoryIconName(c.getString(c.getColumnIndexOrThrow("category_icon_name")));
-                t.setCategoryColorCode(c.getString(c.getColumnIndexOrThrow("category_color_code")));
-                list.add(t);
-            }
-        }
-        return list;
     }
 
     private List<Category> queryCategories(String sql, String[] args) {

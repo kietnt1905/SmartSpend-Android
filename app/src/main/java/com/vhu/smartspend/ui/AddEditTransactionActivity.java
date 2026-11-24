@@ -21,24 +21,20 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.widget.NestedScrollView;
 
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.database.TransactionDAO;
 import com.vhu.smartspend.model.Category;
 import com.vhu.smartspend.model.Transaction;
+import com.vhu.smartspend.utils.CategoryUiHelper;
 import com.vhu.smartspend.utils.DateUtils;
+import com.vhu.smartspend.utils.SessionManager;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class AddEditTransactionActivity extends AppCompatActivity {
 
@@ -52,6 +48,7 @@ public class AddEditTransactionActivity extends AppCompatActivity {
     private ImageView imgReceiptPreview;
 
     private TransactionDAO dao;
+    private SessionManager sessionManager;
     private List<Category> categories = new ArrayList<>();
     private String currentType = Category.TYPE_EXPENSE;
     private int selectedCategoryId = -1;
@@ -73,21 +70,11 @@ public class AddEditTransactionActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        WindowCompat.enableEdgeToEdge(getWindow());
         setContentView(R.layout.activity_add_edit_transaction);
 
-        WindowInsetsControllerCompat insetsController =
-                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        insetsController.setAppearanceLightStatusBars(true);
-        insetsController.setAppearanceLightNavigationBars(true);
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
-            return insets;
-        });
-
         dao = new TransactionDAO(this);
+        sessionManager = new SessionManager(this);
+
         tvScreenTitle = findViewById(R.id.tvScreenTitle);
         tabExpense = findViewById(R.id.tabExpense);
         tabIncome = findViewById(R.id.tabIncome);
@@ -96,20 +83,14 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         edtAmount = findViewById(R.id.edtAmount);
         layoutCategoryGrid = findViewById(R.id.layoutCategoryGrid);
         scrollCategoryGrid = findViewById(R.id.scrollCategoryGrid);
-        scrollCategoryGrid.setOnTouchListener((v, event) -> {
-            if (categories.size() > 8) {
-                int action = event.getActionMasked();
-                boolean disallow = action != MotionEvent.ACTION_UP && action != MotionEvent.ACTION_CANCEL;
-                scrollCategoryGrid.getParent().requestDisallowInterceptTouchEvent(disallow);
-            }
-            return false;
-        });
         tvTransactionDate = findViewById(R.id.tvTransactionDate);
         edtNote = findViewById(R.id.edtNote);
         layoutReceiptPlaceholder = findViewById(R.id.layoutReceiptPlaceholder);
         layoutReceiptPreview = findViewById(R.id.layoutReceiptPreview);
         imgReceiptPreview = findViewById(R.id.imgReceiptPreview);
         tvSaveButtonText = findViewById(R.id.tvSaveButtonText);
+
+        scrollCategoryGrid.setOnTouchListener(nestedScrollTouchListener);
 
         findViewById(R.id.btnCloseTransaction).setOnClickListener(v -> finish());
         tabExpense.setOnClickListener(v -> switchType(Category.TYPE_EXPENSE));
@@ -142,6 +123,20 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         if (dao != null) loadCategories();
     }
 
+    private final View.OnTouchListener nestedScrollTouchListener = (v, event) -> {
+        if (categories.size() > 8) {
+            int action = event.getActionMasked();
+            boolean disallow = action != MotionEvent.ACTION_UP && action != MotionEvent.ACTION_CANCEL;
+            scrollCategoryGrid.getParent().requestDisallowInterceptTouchEvent(disallow);
+        }
+        return false;
+    };
+
+    private int getCurrentUserId() {
+        int id = sessionManager.getUserId();
+        return id > 0 ? id : 1;
+    }
+
     private void switchType(String type) {
         if (currentType.equals(type)) return;
         currentType = type;
@@ -154,17 +149,12 @@ public class AddEditTransactionActivity extends AppCompatActivity {
     private void updateTypeUi() {
         boolean isExpense = Category.TYPE_EXPENSE.equals(currentType);
         tabExpense.setTextColor(Color.parseColor(isExpense ? "#B91C1C" : "#475569"));
-        tabExpense.setBackground(isExpense ? roundedBg("#FFE4DE", 22) : null);
+        tabExpense.setBackground(isExpense ? CategoryUiHelper.createRoundedBg(this, Color.parseColor("#FFE4DE"), 22) : null);
         tabIncome.setTextColor(Color.parseColor(isExpense ? "#475569" : "#0A5C36"));
-        tabIncome.setBackground(isExpense ? null : roundedBg("#D1FAE5", 22));
+        tabIncome.setBackground(isExpense ? null : CategoryUiHelper.createRoundedBg(this, Color.parseColor("#D1FAE5"), 22));
         tvAmountLabel.setText(isExpense ? "Số tiền chi tiêu" : "Số tiền thu nhập");
         tvAmountSign.setText(isExpense ? "-" : "+");
         tvAmountSign.setTextColor(Color.parseColor(isExpense ? "#B91C1C" : "#0A5C36"));
-    }
-
-    private int getCurrentUserId() {
-        int userId = getSharedPreferences("SmartSpendPrefs", MODE_PRIVATE).getInt("user_id", 1);
-        return userId > 0 ? userId : 1;
     }
 
     private void loadCategories() {
@@ -204,152 +194,69 @@ public class AddEditTransactionActivity extends AppCompatActivity {
             layoutCategoryGrid.addView(row);
         }
 
+        // Nếu có hơn 8 danh mục thì giới hạn chiều cao 2 hàng để cuộn mượt bên trong
         if (categories.size() > 8 && layoutCategoryGrid.getChildCount() >= 2) {
             scrollCategoryGrid.setScrollbarFadingEnabled(false);
             layoutCategoryGrid.post(() -> {
                 if (layoutCategoryGrid.getChildCount() >= 2) {
-                    int twoRowsHeight = layoutCategoryGrid.getChildAt(0).getHeight()
-                            + layoutCategoryGrid.getChildAt(1).getHeight();
-                    if (twoRowsHeight > 0) {
-                        ViewGroup.LayoutParams lp = scrollCategoryGrid.getLayoutParams();
-                        if (lp.height != twoRowsHeight) {
-                            lp.height = twoRowsHeight;
-                            scrollCategoryGrid.setLayoutParams(lp);
-                        }
+                    int h = layoutCategoryGrid.getChildAt(0).getHeight() + layoutCategoryGrid.getChildAt(1).getHeight();
+                    if (h > 0 && scrollCategoryGrid.getLayoutParams().height != h) {
+                        scrollCategoryGrid.getLayoutParams().height = h;
+                        scrollCategoryGrid.requestLayout();
                     }
                 }
             });
         } else {
             scrollCategoryGrid.setScrollbarFadingEnabled(true);
-            ViewGroup.LayoutParams lp = scrollCategoryGrid.getLayoutParams();
-            if (lp.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
-                lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                scrollCategoryGrid.setLayoutParams(lp);
+            if (scrollCategoryGrid.getLayoutParams().height != ViewGroup.LayoutParams.WRAP_CONTENT) {
+                scrollCategoryGrid.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                scrollCategoryGrid.requestLayout();
             }
         }
     }
 
     private View buildCategoryItem(Category cat) {
-        boolean selected = cat.getCategoryId() == selectedCategoryId;
-
         LinearLayout item = new LinearLayout(this);
         item.setOrientation(LinearLayout.VERTICAL);
         item.setGravity(Gravity.CENTER_HORIZONTAL);
-        item.setPadding(dp(4), dp(8), dp(4), dp(8));
+        item.setPadding(CategoryUiHelper.dp(this, 4), CategoryUiHelper.dp(this, 8),
+                CategoryUiHelper.dp(this, 4), CategoryUiHelper.dp(this, 8));
         item.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-        item.setTag(cat);
 
         TextView icon = new TextView(this);
-        icon.setLayoutParams(new LinearLayout.LayoutParams(dp(48), dp(48)));
+        int iconSize = CategoryUiHelper.dp(this, 48);
+        icon.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
         icon.setGravity(Gravity.CENTER);
-        icon.setText(getCategoryEmoji(cat.getIconName()));
+        icon.setText(CategoryUiHelper.getEmoji(cat.getIconName()));
         icon.setTextSize(22f);
 
         TextView label = new TextView(this);
-        label.setPadding(0, dp(6), 0, 0);
+        label.setPadding(0, CategoryUiHelper.dp(this, 6), 0, 0);
         label.setGravity(Gravity.CENTER);
         label.setText(cat.getName());
         label.setTextSize(12f);
         label.setMaxLines(1);
         label.setEllipsize(TextUtils.TruncateAt.END);
 
-        item.addView(icon);
-        item.addView(label);
-        applyCategoryItemStyle(item, cat, selected);
-
-        item.setOnTouchListener((v, event) -> {
-            if (categories.size() > 8) {
-                int action = event.getActionMasked();
-                boolean disallow = action != MotionEvent.ACTION_UP && action != MotionEvent.ACTION_CANCEL;
-                scrollCategoryGrid.getParent().requestDisallowInterceptTouchEvent(disallow);
-            }
-            return false;
-        });
-        item.setOnClickListener(v -> {
-            selectedCategoryId = cat.getCategoryId();
-            updateCategorySelection();
-        });
-        return item;
-    }
-
-    private void applyCategoryItemStyle(LinearLayout item, Category cat, boolean selected) {
-        int borderColor = parseCategoryColor(cat.getColorCode());
-
+        boolean selected = cat.getCategoryId() == selectedCategoryId;
+        int borderColor = CategoryUiHelper.parseColor(cat.getColorCode(), "#0A5C36");
         if (selected) {
-            GradientDrawable selectedBox = new GradientDrawable();
-            selectedBox.setCornerRadius(dp(14));
-            selectedBox.setColor(Color.argb(26, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
-            selectedBox.setStroke(dp(2), borderColor);
-            item.setBackground(selectedBox);
-        } else {
-            item.setBackground(null);
+            GradientDrawable box = CategoryUiHelper.createRoundedBg(this, CategoryUiHelper.withAlpha(borderColor, 26), 14);
+            box.setStroke(CategoryUiHelper.dp(this, 2), borderColor);
+            item.setBackground(box);
         }
-
-        GradientDrawable circle = new GradientDrawable();
-        circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(selected
-                ? Color.argb(36, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor))
-                : Color.parseColor("#F8FAFC"));
-        circle.setStroke(dp(selected ? 3 : 2), borderColor);
-
-        TextView icon = (TextView) item.getChildAt(0);
-        icon.setBackground(circle);
-
-        TextView label = (TextView) item.getChildAt(1);
+        icon.setBackground(CategoryUiHelper.createCircleBg(this, borderColor, selected ? 3 : 2));
         label.setTextColor(Color.parseColor(selected ? "#0F172A" : "#334155"));
         label.setTypeface(null, selected ? Typeface.BOLD : Typeface.NORMAL);
-    }
 
-    private void updateCategorySelection() {
-        for (int r = 0; r < layoutCategoryGrid.getChildCount(); r++) {
-            View rowView = layoutCategoryGrid.getChildAt(r);
-            if (!(rowView instanceof LinearLayout)) continue;
-            LinearLayout row = (LinearLayout) rowView;
-            for (int c = 0; c < row.getChildCount(); c++) {
-                View child = row.getChildAt(c);
-                if (child instanceof LinearLayout && child.getTag() instanceof Category) {
-                    Category cat = (Category) child.getTag();
-                    applyCategoryItemStyle((LinearLayout) child, cat, cat.getCategoryId() == selectedCategoryId);
-                }
-            }
-        }
-    }
-
-    private int parseCategoryColor(String colorCode) {
-        if (colorCode != null && !colorCode.trim().isEmpty()) {
-            try {
-                return Color.parseColor(colorCode.trim());
-            } catch (Exception ignored) {
-            }
-        }
-        return Color.parseColor("#0A5C36");
-    }
-
-    private String getCategoryEmoji(String iconName) {
-        if (iconName == null) return "⭐";
-        switch (iconName.toLowerCase(Locale.getDefault())) {
-            case "ic_food": return "🍔";
-            case "ic_coffee": return "☕";
-            case "ic_school": return "📚";
-            case "ic_shopping": return "🛒";
-            case "ic_transport": return "🚗";
-            case "ic_home": return "🏠";
-            case "ic_bill": return "⚡";
-            case "ic_entertainment": return "🎮";
-            case "ic_health": return "💊";
-            case "ic_beauty": return "💄";
-            case "ic_travel": return "✈️";
-            case "ic_pet": return "🐾";
-            case "ic_sport": return "🏋️";
-            case "ic_phone": return "📱";
-            case "ic_gift": return "🎁";
-            case "ic_award": return "🎓";
-            case "ic_work": return "💼";
-            case "ic_savings": return "💰";
-            case "ic_invest": return "📈";
-            case "ic_other": return "⭐";
-            default: return "⭐";
-        }
+        item.addView(icon);
+        item.addView(label);
+        item.setOnTouchListener(nestedScrollTouchListener);
+        item.setOnClickListener(v -> {
+            selectedCategoryId = cat.getCategoryId();
+            renderCategories();
+        });
+        return item;
     }
 
     private void showDatePicker() {
@@ -394,10 +301,9 @@ public class AddEditTransactionActivity extends AppCompatActivity {
     }
 
     private void saveTransaction() {
-        String raw = edtAmount.getText().toString().trim();
         double amount;
         try {
-            amount = Double.parseDouble(raw);
+            amount = Double.parseDouble(edtAmount.getText().toString().trim());
         } catch (NumberFormatException e) {
             Toast.makeText(this, "Vui lòng nhập số tiền hợp lệ!", Toast.LENGTH_SHORT).show();
             edtAmount.requestFocus();
@@ -423,28 +329,14 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         int userId = getCurrentUserId();
         String dbDate = DateUtils.toDbString(calendar.getTime());
 
-        boolean ok;
-        if (editingId != -1) {
-            ok = dao.updateTransaction(new Transaction(editingId, userId, selectedCategoryId, title, amount, dbDate, note, receiptUri)) > 0;
-        } else {
-            ok = dao.insertTransaction(new Transaction(userId, selectedCategoryId, title, amount, dbDate, note, receiptUri)) > 0;
-        }
+        boolean ok = editingId != -1
+                ? dao.updateTransaction(new Transaction(editingId, userId, selectedCategoryId, title, amount, dbDate, note, receiptUri)) > 0
+                : dao.insertTransaction(new Transaction(userId, selectedCategoryId, title, amount, dbDate, note, receiptUri)) > 0;
 
         Toast.makeText(this, ok ? "Lưu giao dịch thành công!" : "Lưu giao dịch thất bại!", Toast.LENGTH_SHORT).show();
         if (ok) {
             setResult(RESULT_OK);
             finish();
         }
-    }
-
-    private GradientDrawable roundedBg(String hex, int radiusDp) {
-        GradientDrawable gd = new GradientDrawable();
-        gd.setColor(Color.parseColor(hex));
-        gd.setCornerRadius(dp(radiusDp));
-        return gd;
-    }
-
-    private int dp(int v) {
-        return Math.round(v * getResources().getDisplayMetrics().density);
     }
 }

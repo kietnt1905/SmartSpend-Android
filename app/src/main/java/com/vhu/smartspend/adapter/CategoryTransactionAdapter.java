@@ -2,7 +2,6 @@ package com.vhu.smartspend.adapter;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +12,7 @@ import com.google.android.material.card.MaterialCardView;
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.model.Category;
 import com.vhu.smartspend.model.Transaction;
+import com.vhu.smartspend.utils.CategoryUiHelper;
 import com.vhu.smartspend.utils.CurrencyUtils;
 import com.vhu.smartspend.utils.DateUtils;
 
@@ -50,16 +50,13 @@ public class CategoryTransactionAdapter extends BaseAdapter {
     private final Context context;
     private final List<RowItem> rows;
     private final String defaultCategoryName;
-    private final String defaultEmoji;
     private final boolean isExpenseMode;
 
     public CategoryTransactionAdapter(Context context, List<RowItem> rows,
-                                      String defaultCategoryName, String defaultEmoji,
-                                      boolean isExpenseMode) {
+                                      String defaultCategoryName, boolean isExpenseMode) {
         this.context = context;
         this.rows = rows;
         this.defaultCategoryName = defaultCategoryName;
-        this.defaultEmoji = defaultEmoji;
         this.isExpenseMode = isExpenseMode;
     }
 
@@ -99,25 +96,17 @@ public class CategoryTransactionAdapter extends BaseAdapter {
         LayoutInflater inflater = LayoutInflater.from(context);
 
         if (item.isHeader) {
-            View view = convertView;
-            if (view == null) {
-                view = inflater.inflate(R.layout.item_tx_date_header, parent, false);
-            }
+            View view = convertView != null ? convertView : inflater.inflate(R.layout.item_tx_date_header, parent, false);
             TextView tvDateLabel = view.findViewById(R.id.tvDateGroupLabel);
             TextView tvDateTotal = view.findViewById(R.id.tvDateGroupTotal);
 
-            String signPrefix = isExpenseMode ? "-" : "+";
             tvDateLabel.setText("Ngày " + DateUtils.formatToDisplay(item.dateLabel));
-            tvDateTotal.setText(signPrefix + CurrencyUtils.formatVND(item.dayTotal));
+            tvDateTotal.setText((isExpenseMode ? "-" : "+") + CurrencyUtils.formatVND(item.dayTotal));
             tvDateTotal.setTextColor(Color.parseColor(isExpenseMode ? "#B91C1C" : "#047857"));
             return view;
         }
 
-        View view = convertView;
-        if (view == null) {
-            view = inflater.inflate(R.layout.item_recent_transaction, parent, false);
-        }
-        // Để ListView.setOnItemClickListener nhận sự kiện click bình thường
+        View view = convertView != null ? convertView : inflater.inflate(R.layout.item_recent_transaction, parent, false);
         view.setClickable(false);
         view.setFocusable(false);
         if (view instanceof MaterialCardView) {
@@ -125,6 +114,7 @@ public class CategoryTransactionAdapter extends BaseAdapter {
         }
 
         Transaction tx = item.transaction;
+        if (tx == null) return view;
         boolean txIncome = Category.TYPE_INCOME.equalsIgnoreCase(tx.getCategoryType());
 
         TextView tvIcon = view.findViewById(R.id.tvTxIcon);
@@ -132,14 +122,9 @@ public class CategoryTransactionAdapter extends BaseAdapter {
         TextView tvSub = view.findViewById(R.id.tvTxSub);
         TextView tvAmount = view.findViewById(R.id.tvTxAmount);
 
-        int borderColor = parseColor(tx.getCategoryColorCode(), txIncome ? "#0A5C36" : "#C62828");
-        float d = context.getResources().getDisplayMetrics().density;
-        GradientDrawable circle = new GradientDrawable();
-        circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(Color.argb(35, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
-        circle.setStroke(Math.round(2 * d), borderColor);
-        tvIcon.setBackground(circle);
-        tvIcon.setText(getIconEmoji(tx.getCategoryIconName()));
+        int borderColor = CategoryUiHelper.parseColor(tx.getCategoryColorCode(), txIncome ? "#0A5C36" : "#C62828");
+        tvIcon.setBackground(CategoryUiHelper.createCircleBg(context, borderColor, 2));
+        tvIcon.setText(CategoryUiHelper.getEmoji(tx.getCategoryIconName()));
 
         String title = defaultCategoryName;
         if (tx.getNote() != null && !tx.getNote().trim().isEmpty()) {
@@ -156,41 +141,5 @@ public class CategoryTransactionAdapter extends BaseAdapter {
         tvAmount.setBackgroundResource(txIncome ? R.drawable.bg_tx_amount_income : R.drawable.bg_tx_amount_expense);
 
         return view;
-    }
-
-    private int parseColor(String colorCode, String fallback) {
-        if (colorCode != null && !colorCode.trim().isEmpty()) {
-            try {
-                return Color.parseColor(colorCode.trim());
-            } catch (Exception ignored) {
-            }
-        }
-        return Color.parseColor(fallback);
-    }
-
-    private String getIconEmoji(String iconName) {
-        if (iconName == null) return defaultEmoji;
-        switch (iconName.toLowerCase()) {
-            case "ic_food": return "🍔";
-            case "ic_coffee": return "☕";
-            case "ic_school": return "📚";
-            case "ic_shopping": return "🛒";
-            case "ic_transport": return "🚗";
-            case "ic_home": return "🏠";
-            case "ic_bill": return "⚡";
-            case "ic_entertainment": return "🎮";
-            case "ic_health": return "💊";
-            case "ic_beauty": return "💄";
-            case "ic_travel": return "✈️";
-            case "ic_pet": return "🐾";
-            case "ic_sport": return "🏋️";
-            case "ic_phone": return "📱";
-            case "ic_gift": return "🎁";
-            case "ic_award": return "🎓";
-            case "ic_work": return "💼";
-            case "ic_savings": return "💰";
-            case "ic_invest": return "📈";
-            default: return defaultEmoji;
-        }
     }
 }

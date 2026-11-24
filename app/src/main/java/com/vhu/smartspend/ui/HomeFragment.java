@@ -1,10 +1,7 @@
 package com.vhu.smartspend.ui;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -25,8 +22,10 @@ import com.vhu.smartspend.model.Budget;
 import com.vhu.smartspend.model.Category;
 import com.vhu.smartspend.model.Transaction;
 import com.vhu.smartspend.utils.BudgetAlertHelper;
+import com.vhu.smartspend.utils.CategoryUiHelper;
 import com.vhu.smartspend.utils.CurrencyUtils;
 import com.vhu.smartspend.utils.DateUtils;
+import com.vhu.smartspend.utils.SessionManager;
 
 import java.util.Calendar;
 import java.util.List;
@@ -34,14 +33,14 @@ import java.util.Locale;
 
 public class HomeFragment extends Fragment {
 
-    private NestedScrollView nestedScrollViewHome;
     private TextView tvUserName, tvTotalBalanceMain, tvHomeIncome, tvHomeExpense;
     private TextView tvBudgetTitle, tvBudgetDaysLeft, tvBudgetUsed, tvBudgetLimit, tvBudgetRemaining;
     private ProgressBar pbHomeBudget;
     private TextView tvRecentCount, tvEmptyRecentTransactions;
     private LinearLayout layoutRecentTransactions;
-    private View fabAddTransaction;
+
     private BudgetDAO budgetDAO;
+    private SessionManager sessionManager;
 
     @Nullable
     @Override
@@ -54,11 +53,10 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        if (getContext() != null) {
-            budgetDAO = new BudgetDAO(getContext());
-        }
+        budgetDAO = new BudgetDAO(requireContext());
+        sessionManager = new SessionManager(requireContext());
 
-        nestedScrollViewHome = view.findViewById(R.id.nestedScrollViewHome);
+        NestedScrollView scrollView = view.findViewById(R.id.nestedScrollViewHome);
         tvUserName = view.findViewById(R.id.tvUserName);
         tvTotalBalanceMain = view.findViewById(R.id.tvTotalBalanceMain);
         tvHomeIncome = view.findViewById(R.id.tvHomeIncome);
@@ -72,18 +70,12 @@ public class HomeFragment extends Fragment {
         tvRecentCount = view.findViewById(R.id.tvRecentCount);
         tvEmptyRecentTransactions = view.findViewById(R.id.tvEmptyRecentTransactions);
         layoutRecentTransactions = view.findViewById(R.id.layoutRecentTransactions);
-        fabAddTransaction = view.findViewById(R.id.fabAddTransaction);
 
-        if (fabAddTransaction != null) {
-            fabAddTransaction.setOnClickListener(v -> {
-                if (getActivity() != null) {
-                    startActivity(new Intent(getActivity(), AddEditTransactionActivity.class));
-                }
-            });
-        }
+        view.findViewById(R.id.fabAddTransaction).setOnClickListener(v ->
+                startActivity(new Intent(requireActivity(), AddEditTransactionActivity.class)));
 
-        if (nestedScrollViewHome != null) {
-            nestedScrollViewHome.post(() -> nestedScrollViewHome.scrollTo(0, 0));
+        if (scrollView != null) {
+            scrollView.post(() -> scrollView.scrollTo(0, 0));
         }
     }
 
@@ -96,11 +88,10 @@ public class HomeFragment extends Fragment {
     private void loadHomeData() {
         if (budgetDAO == null || getContext() == null) return;
 
-        SharedPreferences prefs = getContext().getSharedPreferences("SmartSpendPrefs", Context.MODE_PRIVATE);
-        int userId = prefs.getInt("user_id", 1);
+        int userId = sessionManager.getUserId();
         if (userId <= 0) userId = 1;
-        String fullName = prefs.getString("full_name", "Khách hàng");
-        if (TextUtils.isEmpty(fullName)) fullName = "Khách hàng";
+        String fullName = sessionManager.getFullName();
+        tvUserName.setText(!fullName.isEmpty() ? fullName : "Khách hàng");
 
         Calendar cal = Calendar.getInstance();
         int month = cal.get(Calendar.MONTH) + 1;
@@ -110,26 +101,20 @@ public class HomeFragment extends Fragment {
         double expense = budgetDAO.getTotalExpenseByMonth(userId, monthYear);
         double totalBalance = budgetDAO.getTotalBalance(userId);
 
-        tvUserName.setText(fullName);
         tvTotalBalanceMain.setText(CurrencyUtils.formatVND(totalBalance));
         tvHomeIncome.setText("+" + CurrencyUtils.formatVND(income));
         tvHomeExpense.setText("-" + CurrencyUtils.formatVND(expense));
 
-        updateBudgetCard(userId, month, monthYear, expense, cal);
-        loadRecentTransactions(userId);
+        Budget monthlyBudget = budgetDAO.getTotalMonthlyBudget(userId, monthYear);
+        double budgetLimit = monthlyBudget != null ? monthlyBudget.getLimitAmount() : 0;
 
-        BudgetAlertHelper.BudgetAlertStatus alertStatus =
-                BudgetAlertHelper.checkTotalMonthlyBudgetAlert(getContext(), userId, monthYear);
-        if (alertStatus.isExceeded()) {
-            BudgetAlertHelper.processBudgetAlertActions(getContext(), alertStatus);
-        }
+        updateBudgetCard(month, expense, budgetLimit > 0 ? budgetLimit : 5000000, cal);
+        loadRecentTransactions(userId);
+        BudgetAlertHelper.checkAndAlertMonthlyBudget(getContext(), expense, budgetLimit);
     }
 
-    private void updateBudgetCard(int userId, int month, String monthYear, double expense, Calendar cal) {
+    private void updateBudgetCard(int month, double expense, double limit, Calendar cal) {
         int daysLeft = cal.getActualMaximum(Calendar.DAY_OF_MONTH) - cal.get(Calendar.DAY_OF_MONTH);
-        Budget monthlyBudget = budgetDAO.getTotalMonthlyBudget(userId, monthYear);
-        double limit = (monthlyBudget != null && monthlyBudget.getLimitAmount() > 0)
-                ? monthlyBudget.getLimitAmount() : 5000000;
         double remaining = limit - expense;
         int percent = limit > 0 ? (int) Math.min(100, Math.round((expense * 100.0) / limit)) : 0;
 
@@ -138,6 +123,7 @@ public class HomeFragment extends Fragment {
         tvBudgetUsed.setText("Đã dùng: " + CurrencyUtils.formatVND(expense));
         tvBudgetLimit.setText("Hạn mức: " + CurrencyUtils.formatVND(limit));
         pbHomeBudget.setProgress(percent);
+
         if (remaining >= 0) {
             tvBudgetRemaining.setText("Còn lại " + CurrencyUtils.formatVND(remaining));
             tvBudgetRemaining.setTextColor(Color.parseColor("#1565C0"));
@@ -158,17 +144,14 @@ public class HomeFragment extends Fragment {
         }
         tvEmptyRecentTransactions.setVisibility(View.GONE);
 
-        LayoutInflater inflater = LayoutInflater.from(getContext());
-        float d = getResources().getDisplayMetrics().density;
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
         for (int i = 0; i < list.size(); i++) {
             Transaction tx = list.get(i);
             boolean isIncome = Category.TYPE_INCOME.equalsIgnoreCase(tx.getCategoryType());
 
             View row = inflater.inflate(R.layout.item_recent_transaction, layoutRecentTransactions, false);
             if (i == list.size() - 1) {
-                ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) row.getLayoutParams();
-                lp.bottomMargin = 0;
-                row.setLayoutParams(lp);
+                ((ViewGroup.MarginLayoutParams) row.getLayoutParams()).bottomMargin = 0;
             }
 
             TextView tvIcon = row.findViewById(R.id.tvTxIcon);
@@ -176,13 +159,9 @@ public class HomeFragment extends Fragment {
             TextView tvSub = row.findViewById(R.id.tvTxSub);
             TextView tvAmount = row.findViewById(R.id.tvTxAmount);
 
-            int borderColor = parseCategoryColor(tx.getCategoryColorCode(), isIncome ? "#0A5C36" : "#C62828");
-            GradientDrawable circle = new GradientDrawable();
-            circle.setShape(GradientDrawable.OVAL);
-            circle.setColor(Color.argb(36, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
-            circle.setStroke(Math.round(2 * d), borderColor);
-            tvIcon.setBackground(circle);
-            tvIcon.setText(mapEmoji(tx.getCategoryIconName()));
+            int borderColor = CategoryUiHelper.parseColor(tx.getCategoryColorCode(), isIncome ? "#0A5C36" : "#C62828");
+            tvIcon.setBackground(CategoryUiHelper.createCircleBg(requireContext(), borderColor, 2));
+            tvIcon.setText(CategoryUiHelper.getEmoji(tx.getCategoryIconName()));
 
             tvTitle.setText(!TextUtils.isEmpty(tx.getTitle()) ? tx.getTitle() : tx.getCategoryName());
             String cat = !TextUtils.isEmpty(tx.getCategoryName()) ? tx.getCategoryName() : "Khác";
@@ -193,51 +172,12 @@ public class HomeFragment extends Fragment {
             tvAmount.setBackgroundResource(isIncome ? R.drawable.bg_tx_amount_income : R.drawable.bg_tx_amount_expense);
 
             row.setOnClickListener(v -> {
-                if (getActivity() != null) {
-                    Intent intent = new Intent(getActivity(), TransactionDetailActivity.class);
-                    intent.putExtra("transaction_id", tx.getTransactionId());
-                    startActivity(intent);
-                }
+                Intent intent = new Intent(requireActivity(), TransactionDetailActivity.class);
+                intent.putExtra("transaction_id", tx.getTransactionId());
+                startActivity(intent);
             });
 
             layoutRecentTransactions.addView(row);
-        }
-    }
-
-    private int parseCategoryColor(String colorCode, String fallbackHex) {
-        if (colorCode != null && !colorCode.trim().isEmpty()) {
-            try {
-                return Color.parseColor(colorCode.trim());
-            } catch (Exception ignored) {
-            }
-        }
-        return Color.parseColor(fallbackHex);
-    }
-
-    private String mapEmoji(String iconName) {
-        if (iconName == null) return "⭐";
-        switch (iconName.toLowerCase(Locale.getDefault())) {
-            case "ic_food": return "🍔";
-            case "ic_coffee": return "☕";
-            case "ic_school": return "📚";
-            case "ic_shopping": return "🛒";
-            case "ic_transport": return "🚗";
-            case "ic_home": return "🏠";
-            case "ic_bill": return "⚡";
-            case "ic_entertainment": return "🎮";
-            case "ic_health": return "💊";
-            case "ic_beauty": return "💄";
-            case "ic_travel": return "✈️";
-            case "ic_pet": return "🐾";
-            case "ic_sport": return "🏋️";
-            case "ic_phone": return "📱";
-            case "ic_gift": return "🎁";
-            case "ic_award": return "🎓";
-            case "ic_work": return "💼";
-            case "ic_savings": return "💰";
-            case "ic_invest": return "📈";
-            case "ic_other": return "⭐";
-            default: return "⭐";
         }
     }
 }

@@ -2,10 +2,8 @@ package com.vhu.smartspend.ui;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -16,7 +14,9 @@ import com.vhu.smartspend.adapter.CategoryTransactionAdapter;
 import com.vhu.smartspend.adapter.CategoryTransactionAdapter.RowItem;
 import com.vhu.smartspend.database.BudgetDAO;
 import com.vhu.smartspend.model.Transaction;
+import com.vhu.smartspend.utils.CategoryUiHelper;
 import com.vhu.smartspend.utils.CurrencyUtils;
+import com.vhu.smartspend.utils.SessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,23 +30,19 @@ public class CategoryTransactionsActivity extends AppCompatActivity {
     public static final String EXTRA_CATEGORY_NAME = "category_name";
     public static final String EXTRA_CATEGORY_ICON_EMOJI = "category_icon_emoji";
     public static final String EXTRA_CATEGORY_COLOR = "category_color";
-    public static final String EXTRA_CATEGORY_BG_COLOR = "category_bg_color";
     public static final String EXTRA_DATE_PREFIX = "date_prefix";
     public static final String EXTRA_PERIOD_DISPLAY = "period_display";
     public static final String EXTRA_IS_EXPENSE = "is_expense";
 
     private BudgetDAO budgetDAO;
+    private SessionManager sessionManager;
 
     private int categoryId = -1;
-    private String categoryName = "Danh mục";
-    private String categoryIconEmoji = "⭐";
-    private int categoryColor;
-    private int categoryBgColor;
     private String datePrefix = "";
     private String periodDisplay = "";
     private boolean isExpenseMode = true;
 
-    private TextView tvCatIcon, tvCatName, tvCatSub, tvCatTotal, tvEmpty;
+    private TextView tvCatSub, tvCatTotal, tvEmpty;
     private ListView lvTransactions;
     private final List<RowItem> rowList = new ArrayList<>();
     private CategoryTransactionAdapter adapter;
@@ -57,57 +53,45 @@ public class CategoryTransactionsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_category_transactions);
 
         budgetDAO = new BudgetDAO(this);
+        sessionManager = new SessionManager(this);
 
         // Nhận dữ liệu từ StatisticFragment truyền sang bằng Intent
         Intent intent = getIntent();
         categoryId = intent.getIntExtra(EXTRA_CATEGORY_ID, -1);
-        String nameExtra = intent.getStringExtra(EXTRA_CATEGORY_NAME);
-        if (nameExtra != null && !nameExtra.isEmpty()) {
-            categoryName = nameExtra;
-        }
-        String emojiExtra = intent.getStringExtra(EXTRA_CATEGORY_ICON_EMOJI);
-        if (emojiExtra != null && !emojiExtra.isEmpty()) {
-            categoryIconEmoji = emojiExtra;
-        }
+        String categoryName = intent.getStringExtra(EXTRA_CATEGORY_NAME);
+        if (categoryName == null || categoryName.isEmpty()) categoryName = "Danh mục";
+        String emoji = intent.getStringExtra(EXTRA_CATEGORY_ICON_EMOJI);
+        if (emoji == null || emoji.isEmpty()) emoji = "⭐";
         isExpenseMode = intent.getBooleanExtra(EXTRA_IS_EXPENSE, true);
-        int defaultColor = Color.parseColor(isExpenseMode ? "#D32F2F" : "#0B8043");
-        categoryColor = intent.getIntExtra(EXTRA_CATEGORY_COLOR, defaultColor);
-        categoryBgColor = intent.getIntExtra(EXTRA_CATEGORY_BG_COLOR,
-                Color.argb(40, Color.red(categoryColor), Color.green(categoryColor), Color.blue(categoryColor)));
-        String prefixExtra = intent.getStringExtra(EXTRA_DATE_PREFIX);
-        if (prefixExtra != null) datePrefix = prefixExtra;
-        String periodExtra = intent.getStringExtra(EXTRA_PERIOD_DISPLAY);
-        if (periodExtra != null) periodDisplay = periodExtra;
+        int categoryColor = intent.getIntExtra(EXTRA_CATEGORY_COLOR,
+                Color.parseColor(isExpenseMode ? "#D32F2F" : "#0B8043"));
+        datePrefix = intent.getStringExtra(EXTRA_DATE_PREFIX);
+        if (datePrefix == null) datePrefix = "";
+        periodDisplay = intent.getStringExtra(EXTRA_PERIOD_DISPLAY);
+        if (periodDisplay == null) periodDisplay = "";
 
-        ImageButton btnBack = findViewById(R.id.btnBackCategoryTx);
-        tvCatIcon = findViewById(R.id.tvCatTxIcon);
-        tvCatName = findViewById(R.id.tvCatTxName);
+        TextView tvCatIcon = findViewById(R.id.tvCatTxIcon);
+        TextView tvCatName = findViewById(R.id.tvCatTxName);
         tvCatSub = findViewById(R.id.tvCatTxSub);
         tvCatTotal = findViewById(R.id.tvCatTxTotal);
         tvEmpty = findViewById(R.id.tvCategoryTxEmpty);
         lvTransactions = findViewById(R.id.lvCategoryTransactions);
 
-        btnBack.setOnClickListener(v -> finish());
+        findViewById(R.id.btnBackCategoryTx).setOnClickListener(v -> finish());
 
-        // Hiển thị thông tin danh mục trên header
-        float d = getResources().getDisplayMetrics().density;
-        GradientDrawable catCircle = new GradientDrawable();
-        catCircle.setShape(GradientDrawable.OVAL);
-        catCircle.setColor(categoryBgColor);
-        catCircle.setStroke(Math.round(2 * d), categoryColor);
-        tvCatIcon.setBackground(catCircle);
-        tvCatIcon.setText(categoryIconEmoji);
+        tvCatIcon.setBackground(CategoryUiHelper.createCircleBg(this, categoryColor, 2));
+        tvCatIcon.setText(emoji);
         tvCatName.setText(categoryName);
 
-        adapter = new CategoryTransactionAdapter(this, rowList, categoryName, categoryIconEmoji, isExpenseMode);
+        adapter = new CategoryTransactionAdapter(this, rowList, categoryName, isExpenseMode);
         lvTransactions.setAdapter(adapter);
 
         // Nhấn vào giao dịch để chuyển sang màn hình sửa giao dịch
         lvTransactions.setOnItemClickListener((parent, view, position, id) -> {
             RowItem clicked = rowList.get(position);
             if (!clicked.isHeader && clicked.transaction != null) {
-                Intent editIntent = new Intent(CategoryTransactionsActivity.this, AddEditTransactionActivity.class);
-                editIntent.putExtra("transaction_id", clicked.transaction.getTransactionId());
+                Intent editIntent = new Intent(this, AddEditTransactionActivity.class);
+                editIntent.putExtra(AddEditTransactionActivity.EXTRA_TRANSACTION_ID, clicked.transaction.getTransactionId());
                 startActivity(editIntent);
             }
         });
@@ -125,15 +109,12 @@ public class CategoryTransactionsActivity extends AppCompatActivity {
             return;
         }
 
-        int userId = getSharedPreferences("SmartSpendPrefs", MODE_PRIVATE).getInt("user_id", 1);
-        if (userId <= 0) userId = 1;
-
-        List<Transaction> transactions = budgetDAO.getTransactionsByCategoryAndDatePrefix(
-                userId, categoryId, datePrefix);
+        int userId = sessionManager.getUserId() > 0 ? sessionManager.getUserId() : 1;
+        List<Transaction> transactions = budgetDAO.getTransactionsByCategoryAndDatePrefix(userId, categoryId, datePrefix);
 
         double total = 0;
-        for (int i = 0; i < transactions.size(); i++) {
-            total += transactions.get(i).getAmount();
+        for (Transaction tx : transactions) {
+            total += tx.getAmount();
         }
 
         String subPrefix = periodDisplay.isEmpty() ? "" : periodDisplay + " • ";
