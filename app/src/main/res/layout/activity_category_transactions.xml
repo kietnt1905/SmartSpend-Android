@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F1F5F9"
+    android:fitsSystemWindows="true"
     android:orientation="vertical"
     tools:context=".ui.CategoryTransactionsActivity">
 
@@ -113,24 +114,19 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Danh sách giao dịch gom theo ngày -->
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/scrollCategoryTx"
+    <!-- ListView hiển thị giao dịch theo ngày -->
+    <ListView
+        android:id="@+id/lvCategoryTransactions"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:fillViewport="true"
-        android:scrollbars="vertical">
-
-        <LinearLayout
-            android:id="@+id/layoutCategoryTransactions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="14dp"
-            android:paddingBottom="24dp" />
-    </androidx.core.widget.NestedScrollView>
+        android:clipToPadding="false"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="20dp"
+        android:scrollbars="vertical" />
 
     <TextView
         android:id="@+id/tvCategoryTxEmpty"
