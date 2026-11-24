@@ -28,6 +28,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.database.BudgetDAO;
 import com.vhu.smartspend.model.Category;
@@ -69,6 +70,7 @@ public class StatisticFragment extends Fragment {
     private CardView cardDateRangePicker;
 
     private TextView tvOverviewTitle, tvComparisonBadge, tvTotalExpenseMain;
+    private MaterialCardView cardOverviewSub, cardNetBalance;
     private TextView tvOverviewSubLabel, tvTotalIncome, tvNetBalance;
     private TextView tvCategorySectionTitle, tvSortOrder, tvEmptyState;
     private SearchView svTransactionSearch;
@@ -156,6 +158,8 @@ public class StatisticFragment extends Fragment {
         tvOverviewTitle = view.findViewById(R.id.tvOverviewTitle);
         tvComparisonBadge = view.findViewById(R.id.tvComparisonBadge);
         tvTotalExpenseMain = view.findViewById(R.id.tvTotalExpenseMain);
+        cardOverviewSub = view.findViewById(R.id.cardOverviewSub);
+        cardNetBalance = view.findViewById(R.id.cardNetBalance);
         tvOverviewSubLabel = view.findViewById(R.id.tvOverviewSubLabel);
         tvTotalIncome = view.findViewById(R.id.tvTotalIncome);
         tvNetBalance = view.findViewById(R.id.tvNetBalance);
@@ -551,24 +555,28 @@ public class StatisticFragment extends Fragment {
         if (isExpenseMode) {
             tvOverviewTitle.setText("Tổng chi tiêu");
             tvTotalExpenseMain.setText(totalExpense > 0 ? "-" + CurrencyUtils.formatVND(totalExpense) : "0 đ");
-            tvTotalExpenseMain.setTextColor(Color.parseColor("#D32F2F"));
+            tvTotalExpenseMain.setTextColor(Color.parseColor("#DC2626"));
 
-            tvOverviewSubLabel.setText("● Tổng thu");
-            tvOverviewSubLabel.setTextColor(Color.parseColor("#0B8043"));
+            tvOverviewSubLabel.setText("Tổng thu");
+            tvOverviewSubLabel.setTextColor(Color.parseColor("#047857"));
             tvTotalIncome.setText(totalIncome > 0 ? "+" + CurrencyUtils.formatVND(totalIncome) : "0 đ");
-            tvTotalIncome.setTextColor(Color.parseColor("#0B8043"));
+            tvTotalIncome.setTextColor(Color.parseColor("#065F46"));
+            cardOverviewSub.setCardBackgroundColor(Color.parseColor("#ECFDF5"));
+            cardOverviewSub.setStrokeColor(Color.parseColor("#D1FAE5"));
 
             tvCategorySectionTitle.setText("Chi tiết chi tiêu");
             tvEmptyState.setText("Chưa có dữ liệu chi tiêu trong khoảng thời gian này.");
         } else {
             tvOverviewTitle.setText("Tổng thu nhập");
             tvTotalExpenseMain.setText(totalIncome > 0 ? "+" + CurrencyUtils.formatVND(totalIncome) : "0 đ");
-            tvTotalExpenseMain.setTextColor(Color.parseColor("#0B8043"));
+            tvTotalExpenseMain.setTextColor(Color.parseColor("#059669"));
 
-            tvOverviewSubLabel.setText("● Tổng chi");
-            tvOverviewSubLabel.setTextColor(Color.parseColor("#D32F2F"));
+            tvOverviewSubLabel.setText("Tổng chi");
+            tvOverviewSubLabel.setTextColor(Color.parseColor("#B91C1C"));
             tvTotalIncome.setText(totalExpense > 0 ? "-" + CurrencyUtils.formatVND(totalExpense) : "0 đ");
-            tvTotalIncome.setTextColor(Color.parseColor("#D32F2F"));
+            tvTotalIncome.setTextColor(Color.parseColor("#991B1B"));
+            cardOverviewSub.setCardBackgroundColor(Color.parseColor("#FEF2F2"));
+            cardOverviewSub.setStrokeColor(Color.parseColor("#FECACA"));
 
             tvCategorySectionTitle.setText("Chi tiết thu nhập");
             tvEmptyState.setText("Chưa có dữ liệu thu nhập trong khoảng thời gian này.");
@@ -576,13 +584,19 @@ public class StatisticFragment extends Fragment {
 
         if (netBalance > 0) {
             tvNetBalance.setText("+" + CurrencyUtils.formatVND(netBalance));
-            tvNetBalance.setTextColor(Color.parseColor("#1A73E8"));
+            tvNetBalance.setTextColor(Color.parseColor("#1E40AF"));
+            cardNetBalance.setCardBackgroundColor(Color.parseColor("#EFF6FF"));
+            cardNetBalance.setStrokeColor(Color.parseColor("#DBEAFE"));
         } else if (netBalance < 0) {
             tvNetBalance.setText("-" + CurrencyUtils.formatVND(Math.abs(netBalance)));
-            tvNetBalance.setTextColor(Color.parseColor("#D32F2F"));
+            tvNetBalance.setTextColor(Color.parseColor("#B91C1C"));
+            cardNetBalance.setCardBackgroundColor(Color.parseColor("#FEF2F2"));
+            cardNetBalance.setStrokeColor(Color.parseColor("#FECACA"));
         } else {
             tvNetBalance.setText("0 đ");
-            tvNetBalance.setTextColor(Color.parseColor("#1A73E8"));
+            tvNetBalance.setTextColor(Color.parseColor("#1E40AF"));
+            cardNetBalance.setCardBackgroundColor(Color.parseColor("#EFF6FF"));
+            cardNetBalance.setStrokeColor(Color.parseColor("#DBEAFE"));
         }
 
         updateComparisonBadge(mainAmount, prevAmount, isExpenseMode);
@@ -629,11 +643,11 @@ public class StatisticFragment extends Fragment {
 
         boolean isGood = isExpenseMode ? (diffPct <= 0) : (diffPct >= 0);
         if (isGood) {
-            tvComparisonBadge.setTextColor(Color.parseColor("#0B8043"));
-            tvComparisonBadge.setBackgroundColor(Color.parseColor("#E8F5E9"));
+            tvComparisonBadge.setTextColor(Color.parseColor("#047857"));
+            tvComparisonBadge.setBackground(createTabDrawable(Color.parseColor("#D1FAE5")));
         } else {
-            tvComparisonBadge.setTextColor(Color.parseColor("#D32F2F"));
-            tvComparisonBadge.setBackgroundColor(Color.parseColor("#FDE8E8"));
+            tvComparisonBadge.setTextColor(Color.parseColor("#B91C1C"));
+            tvComparisonBadge.setBackground(createTabDrawable(Color.parseColor("#FEE2E2")));
         }
     }
 
