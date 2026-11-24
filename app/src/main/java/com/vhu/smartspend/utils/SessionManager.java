@@ -61,6 +61,14 @@ public class SessionManager {
     }
 
     /**
+     * Cập nhật họ và tên trong phiên đăng nhập
+     */
+    public void updateFullName(String fullName) {
+        editor.putString(KEY_FULL_NAME, fullName);
+        editor.apply();
+    }
+
+    /**
      * Đăng xuất người dùng (xóa dữ liệu phiên đăng nhập)
      */
     public void logout() {

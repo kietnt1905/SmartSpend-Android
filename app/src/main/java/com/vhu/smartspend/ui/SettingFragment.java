@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,8 +31,7 @@ import java.util.Locale;
 public class SettingFragment extends Fragment {
 
     private TextView tvUserFullName, tvUsername, tvMonthlyLimit;
-    private View btnManageCategory, btnExportCsv, btnLogout;
-    private View rowMonthlyLimit;
+    private View layoutProfileAvatar, rowMonthlyLimit, btnManageCategory, btnExportCsv, btnLogout;
 
     private SessionManager sessionManager;
     private DatabaseHelper dbHelper;
@@ -54,6 +54,7 @@ public class SettingFragment extends Fragment {
         tvUsername = view.findViewById(R.id.tvUsername);
         tvMonthlyLimit = view.findViewById(R.id.tvMonthlyLimit);
 
+        layoutProfileAvatar = view.findViewById(R.id.layoutProfileAvatar);
         rowMonthlyLimit = view.findViewById(R.id.rowMonthlyLimit);
         btnManageCategory = view.findViewById(R.id.btnManageCategory);
         btnExportCsv = view.findViewById(R.id.btnExportCsv);
@@ -62,6 +63,7 @@ public class SettingFragment extends Fragment {
         bindUserInfo();
         loadMonthlyLimit();
 
+        layoutProfileAvatar.setOnClickListener(v -> showEditFullNameDialog());
         rowMonthlyLimit.setOnClickListener(v -> showEditMonthlyLimitDialog());
 
         btnManageCategory.setOnClickListener(v -> {
@@ -73,13 +75,7 @@ public class SettingFragment extends Fragment {
                 CsvExporter.exportTransactionsToCsv(requireContext(), sessionManager.getUserId())
         );
 
-        btnLogout.setOnClickListener(v -> {
-            sessionManager.logout();
-            Intent intent = new Intent(requireActivity(), LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            requireActivity().finish();
-        });
+        btnLogout.setOnClickListener(v -> showLogoutConfirmDialog());
 
         return view;
     }
@@ -90,6 +86,57 @@ public class SettingFragment extends Fragment {
 
         tvUserFullName.setText(!fullName.isEmpty() ? fullName : "Người dùng");
         tvUsername.setText(!username.isEmpty() ? "@" + username : "@smartspend");
+    }
+
+    private void showEditFullNameDialog() {
+        EditText input = new EditText(requireContext());
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        input.setText(sessionManager.getFullName());
+        input.setSelection(input.getText().length());
+
+        int pad = Math.round(20 * getResources().getDisplayMetrics().density);
+        FrameLayout container = new FrameLayout(requireContext());
+        container.setPadding(pad, pad / 2, pad, 0);
+        container.addView(input);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Đổi tên hiển thị")
+                .setView(container)
+                .setPositiveButton("Lưu", (dialog, which) -> {
+                    String newName = input.getText().toString().trim();
+                    if (newName.isEmpty()) {
+                        Toast.makeText(requireContext(), "Tên không được để trống", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    int userId = sessionManager.getUserId();
+                    if (userId > 0) {
+                        try (SQLiteDatabase db = dbHelper.getWritableDatabase()) {
+                            ContentValues cv = new ContentValues();
+                            cv.put("full_name", newName);
+                            db.update("users", cv, "user_id = ?", new String[]{String.valueOf(userId)});
+                        }
+                    }
+                    sessionManager.updateFullName(newName);
+                    tvUserFullName.setText(newName);
+                    Toast.makeText(requireContext(), "Đã cập nhật tên hiển thị!", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    private void showLogoutConfirmDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Đăng xuất")
+                .setMessage("Bạn có chắc chắn muốn đăng xuất tài khoản không?")
+                .setPositiveButton("Đăng xuất", (dialog, which) -> {
+                    sessionManager.logout();
+                    Intent intent = new Intent(requireActivity(), LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    requireActivity().finish();
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
     }
 
     private void loadMonthlyLimit() {
@@ -116,7 +163,7 @@ public class SettingFragment extends Fragment {
         input.setSelection(input.getText().length());
 
         int pad = Math.round(20 * getResources().getDisplayMetrics().density);
-        android.widget.FrameLayout container = new android.widget.FrameLayout(requireContext());
+        FrameLayout container = new FrameLayout(requireContext());
         container.setPadding(pad, pad / 2, pad, 0);
         container.addView(input);
 
