@@ -2,6 +2,7 @@ package com.vhu.smartspend.ui;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -30,10 +31,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.database.BudgetDAO;
 import com.vhu.smartspend.model.Category;
+import com.vhu.smartspend.utils.CurrencyUtils;
 
 import java.text.Collator;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -247,7 +247,13 @@ public class StatisticFragment extends Fragment {
         } else {
             tvEmptyState.setVisibility(View.GONE);
             rvCategorySpending.setVisibility(View.VISIBLE);
-            categoryAdapter = new CategoryAdapter(filteredList, currentType == TYPE_EXPENSE);
+            categoryAdapter = new CategoryAdapter(filteredList, currentType == TYPE_EXPENSE, item -> {
+                if (getActivity() != null) {
+                    Intent intent = new Intent(getActivity(), CategoryManageActivity.class);
+                    intent.putExtra("category_id", item.categoryId);
+                    startActivity(intent);
+                }
+            });
             rvCategorySpending.setAdapter(categoryAdapter);
         }
     }
@@ -544,24 +550,24 @@ public class StatisticFragment extends Fragment {
         // Cập nhật cardOverview gọn, hợp lý theo chế độ Chi tiêu / Thu nhập
         if (isExpenseMode) {
             tvOverviewTitle.setText("Tổng chi tiêu");
-            tvTotalExpenseMain.setText(totalExpense > 0 ? "-" + formatAmountDot(totalExpense) : "0 đ");
+            tvTotalExpenseMain.setText(totalExpense > 0 ? "-" + CurrencyUtils.formatVND(totalExpense) : "0 đ");
             tvTotalExpenseMain.setTextColor(Color.parseColor("#D32F2F"));
 
             tvOverviewSubLabel.setText("● Tổng thu");
             tvOverviewSubLabel.setTextColor(Color.parseColor("#0B8043"));
-            tvTotalIncome.setText(totalIncome > 0 ? "+" + formatAmountDot(totalIncome) : "0 đ");
+            tvTotalIncome.setText(totalIncome > 0 ? "+" + CurrencyUtils.formatVND(totalIncome) : "0 đ");
             tvTotalIncome.setTextColor(Color.parseColor("#0B8043"));
 
             tvCategorySectionTitle.setText("Chi tiết chi tiêu");
             tvEmptyState.setText("Chưa có dữ liệu chi tiêu trong khoảng thời gian này.");
         } else {
             tvOverviewTitle.setText("Tổng thu nhập");
-            tvTotalExpenseMain.setText(totalIncome > 0 ? "+" + formatAmountDot(totalIncome) : "0 đ");
+            tvTotalExpenseMain.setText(totalIncome > 0 ? "+" + CurrencyUtils.formatVND(totalIncome) : "0 đ");
             tvTotalExpenseMain.setTextColor(Color.parseColor("#0B8043"));
 
             tvOverviewSubLabel.setText("● Tổng chi");
             tvOverviewSubLabel.setTextColor(Color.parseColor("#D32F2F"));
-            tvTotalIncome.setText(totalExpense > 0 ? "-" + formatAmountDot(totalExpense) : "0 đ");
+            tvTotalIncome.setText(totalExpense > 0 ? "-" + CurrencyUtils.formatVND(totalExpense) : "0 đ");
             tvTotalIncome.setTextColor(Color.parseColor("#D32F2F"));
 
             tvCategorySectionTitle.setText("Chi tiết thu nhập");
@@ -569,10 +575,10 @@ public class StatisticFragment extends Fragment {
         }
 
         if (netBalance > 0) {
-            tvNetBalance.setText("+" + formatAmountDot(netBalance));
+            tvNetBalance.setText("+" + CurrencyUtils.formatVND(netBalance));
             tvNetBalance.setTextColor(Color.parseColor("#1A73E8"));
         } else if (netBalance < 0) {
-            tvNetBalance.setText("-" + formatAmountDot(Math.abs(netBalance)));
+            tvNetBalance.setText("-" + CurrencyUtils.formatVND(Math.abs(netBalance)));
             tvNetBalance.setTextColor(Color.parseColor("#D32F2F"));
         } else {
             tvNetBalance.setText("0 đ");
@@ -593,6 +599,7 @@ public class StatisticFragment extends Fragment {
             String emoji = mapIconEmoji(summary.iconName);
 
             allCategoryItems.add(new CategoryDetailItem(
+                    summary.categoryId,
                     summary.name,
                     summary.totalAmount,
                     percentage,
@@ -703,18 +710,16 @@ public class StatisticFragment extends Fragment {
         }
     }
 
-    private static String formatAmountDot(double amount) {
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.getDefault());
-        symbols.setGroupingSeparator('.');
-        DecimalFormat formatter = new DecimalFormat("#,###", symbols);
-        return formatter.format(amount) + " đ";
-    }
-
     // =========================================================================
     // MODEL & ADAPTER HIỂN THỊ DANH MỤC CHI TIẾT
     // =========================================================================
 
+    private interface OnCategoryClickListener {
+        void onCategoryClick(CategoryDetailItem item);
+    }
+
     private static class CategoryDetailItem {
+        final int categoryId;
         final String name;
         final double amount;
         final int percentage;
@@ -724,8 +729,9 @@ public class StatisticFragment extends Fragment {
         final int color;
         final int iconBgColor;
 
-        CategoryDetailItem(String name, double amount, int percentage, int txCount,
+        CategoryDetailItem(int categoryId, String name, double amount, int percentage, int txCount,
                            String transactionCount, String iconEmoji, int color, int iconBgColor) {
+            this.categoryId = categoryId;
             this.name = name;
             this.amount = amount;
             this.percentage = percentage;
@@ -740,10 +746,12 @@ public class StatisticFragment extends Fragment {
     private static class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHolder> {
         private final List<CategoryDetailItem> list;
         private final boolean isExpense;
+        private final OnCategoryClickListener clickListener;
 
-        public CategoryAdapter(List<CategoryDetailItem> list, boolean isExpense) {
+        public CategoryAdapter(List<CategoryDetailItem> list, boolean isExpense, OnCategoryClickListener clickListener) {
             this.list = list;
             this.isExpense = isExpense;
+            this.clickListener = clickListener;
         }
 
         @NonNull
@@ -770,7 +778,7 @@ public class StatisticFragment extends Fragment {
             holder.tvSub.setText(item.transactionCount);
 
             String prefix = isExpense ? "-" : "+";
-            holder.tvAmount.setText(prefix + formatAmountDot(item.amount));
+            holder.tvAmount.setText(prefix + CurrencyUtils.formatVND(item.amount));
             holder.tvAmount.setTextColor(Color.parseColor(isExpense ? "#B91C1C" : "#047857"));
 
             holder.tvPercent.setText(item.percentage + "%");
@@ -782,6 +790,12 @@ public class StatisticFragment extends Fragment {
 
             holder.pb.setProgress(item.percentage);
             holder.pb.setProgressTintList(ColorStateList.valueOf(item.color));
+
+            holder.itemView.setOnClickListener(v -> {
+                if (clickListener != null) {
+                    clickListener.onCategoryClick(item);
+                }
+            });
         }
 
         @Override
