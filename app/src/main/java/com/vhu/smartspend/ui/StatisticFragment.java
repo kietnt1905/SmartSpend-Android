@@ -740,6 +740,12 @@ public class StatisticFragment extends Fragment {
         View sheetView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_category_transactions, null);
         BottomSheetDialog dialog = new BottomSheetDialog(getContext());
         dialog.setContentView(sheetView);
+        dialog.setOnShowListener(d -> {
+            View bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (bottomSheet != null) {
+                bottomSheet.setBackgroundColor(Color.TRANSPARENT);
+            }
+        });
         dialog.setOnDismissListener(d -> {
             activeCategorySheet = null;
             activeSheetView = null;
@@ -786,6 +792,7 @@ public class StatisticFragment extends Fragment {
         String prefix = isExpenseMode ? "-" : "+";
         tvCatTotal.setText(transactions.isEmpty() ? "0 đ" : prefix + CurrencyUtils.formatVND(total));
         tvCatTotal.setTextColor(Color.parseColor(isExpenseMode ? "#B91C1C" : "#047857"));
+        tvCatTotal.setBackgroundResource(isExpenseMode ? R.drawable.bg_tx_amount_expense : R.drawable.bg_tx_amount_income);
 
         layoutList.removeAllViews();
         if (transactions.isEmpty()) {
@@ -819,11 +826,15 @@ public class StatisticFragment extends Fragment {
             TextView tvDateTotal = headerView.findViewById(R.id.tvDateGroupTotal);
             tvDateLabel.setText("Ngày " + DateUtils.formatToDisplay(entry.getKey()));
             tvDateTotal.setText(prefix + CurrencyUtils.formatVND(dayTotal));
+            tvDateTotal.setTextColor(Color.parseColor(isExpenseMode ? "#B91C1C" : "#047857"));
             layoutList.addView(headerView);
 
             for (Transaction tx : dayList) {
                 boolean txIncome = Category.TYPE_INCOME.equalsIgnoreCase(tx.getCategoryType());
                 View row = inflater.inflate(R.layout.item_recent_transaction, layoutList, false);
+                if (row instanceof MaterialCardView) {
+                    ((MaterialCardView) row).setCardBackgroundColor(Color.WHITE);
+                }
 
                 TextView tvIcon = row.findViewById(R.id.tvTxIcon);
                 TextView tvTitle = row.findViewById(R.id.tvTxTitle);
@@ -842,7 +853,8 @@ public class StatisticFragment extends Fragment {
                         ? tx.getNote()
                         : (!TextUtils.isEmpty(tx.getTitle()) ? tx.getTitle() : item.name);
                 tvTitle.setText(displayTitle);
-                tvSub.setText(DateUtils.formatToDisplay(tx.getTransactionDate()) + " • Nhấn để sửa");
+                tvSub.setText("Chạm để chỉnh sửa • " + DateUtils.formatToDisplay(tx.getTransactionDate()));
+                tvSub.setTextColor(Color.parseColor("#0A6847"));
 
                 tvAmount.setText((txIncome ? "+" : "-") + CurrencyUtils.formatVND(tx.getAmount()));
                 tvAmount.setTextColor(Color.parseColor(txIncome ? "#047857" : "#B91C1C"));
