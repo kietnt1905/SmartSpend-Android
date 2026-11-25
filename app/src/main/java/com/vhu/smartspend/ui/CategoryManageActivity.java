@@ -108,6 +108,17 @@ public class CategoryManageActivity extends AppCompatActivity {
         updateActionButtons();
         loadCategories();
 
+        int preselectCategoryId = getIntent().getIntExtra("category_id", -1);
+        if (preselectCategoryId != -1) {
+            for (Category c : categoryList) {
+                if (c.getCategoryId() == preselectCategoryId) {
+                    selectedCategory = c;
+                    populateInputs(c);
+                    break;
+                }
+            }
+        }
+
         findViewById(R.id.btnBackCategory).setOnClickListener(v -> finish());
         btnSaveCategory.setOnClickListener(v -> {
             if (selectedCategory == null) {
@@ -293,8 +304,13 @@ public class CategoryManageActivity extends AppCompatActivity {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
+    private int getCurrentUserId() {
+        int userId = sessionManager != null ? sessionManager.getUserId() : -1;
+        return userId > 0 ? userId : 1;
+    }
+
     private void loadCategories() {
-        categoryList = categoryDAO.getAllCategories();
+        categoryList = categoryDAO.getAllCategories(getCurrentUserId());
         gridAdapter.updateData(categoryList);
     }
 
@@ -305,13 +321,15 @@ public class CategoryManageActivity extends AppCompatActivity {
             return;
         }
 
+        int userId = getCurrentUserId();
         String type = rbIncome.isChecked() ? Category.TYPE_INCOME : Category.TYPE_EXPENSE;
-        if (categoryDAO.existsCategoryName(name, type, -1)) {
+        if (categoryDAO.existsCategoryName(userId, name, type, -1)) {
             edtCategoryName.setError("Danh mục này đã tồn tại");
             return;
         }
 
         Category cat = new Category(name, type, selectedIconName, selectedColorHex);
+        cat.setUserId(userId);
         long result = categoryDAO.insertCategory(cat);
         if (result > 0) {
             Toast.makeText(this, "Thêm danh mục thành công!", Toast.LENGTH_SHORT).show();
@@ -334,12 +352,14 @@ public class CategoryManageActivity extends AppCompatActivity {
             return;
         }
 
+        int userId = getCurrentUserId();
         String type = rbIncome.isChecked() ? Category.TYPE_INCOME : Category.TYPE_EXPENSE;
-        if (categoryDAO.existsCategoryName(name, type, selectedCategory.getCategoryId())) {
+        if (categoryDAO.existsCategoryName(userId, name, type, selectedCategory.getCategoryId())) {
             edtCategoryName.setError("Danh mục này đã tồn tại");
             return;
         }
 
+        selectedCategory.setUserId(userId);
         selectedCategory.setName(name);
         selectedCategory.setType(type);
         selectedCategory.setIconName(selectedIconName);
@@ -356,10 +376,6 @@ public class CategoryManageActivity extends AppCompatActivity {
     }
 
     private void deleteCategory() {
-        if (!"ADMIN".equalsIgnoreCase(sessionManager.getRole())) {
-            Toast.makeText(this, "Chỉ tài khoản ADMIN mới có quyền xóa danh mục!", Toast.LENGTH_LONG).show();
-            return;
-        }
         if (selectedCategory == null) {
             Toast.makeText(this, "Vui lòng chọn danh mục cần xóa!", Toast.LENGTH_SHORT).show();
             return;
@@ -368,19 +384,16 @@ public class CategoryManageActivity extends AppCompatActivity {
     }
 
     private void showDeleteConfirmDialog(Category cat) {
-        if (!"ADMIN".equalsIgnoreCase(sessionManager.getRole())) {
-            Toast.makeText(this, "Chỉ tài khoản ADMIN mới có quyền xóa danh mục!", Toast.LENGTH_LONG).show();
-            return;
-        }
         if (categoryDAO.isCategoryInUse(cat.getCategoryId())) {
             Toast.makeText(this, "Không thể xóa danh mục đang có giao dịch!", Toast.LENGTH_LONG).show();
             return;
         }
+        int userId = getCurrentUserId();
         new AlertDialog.Builder(this)
                 .setTitle("Xác nhận xóa")
                 .setMessage("Bạn có chắc chắn muốn xóa danh mục '" + cat.getName() + "'?")
                 .setPositiveButton("Xóa", (dialog, which) -> {
-                    int rows = categoryDAO.deleteCategory(cat.getCategoryId());
+                    int rows = categoryDAO.deleteCategory(cat.getCategoryId(), userId);
                     if (rows > 0) {
                         Toast.makeText(this, "Đã xóa danh mục thành công!", Toast.LENGTH_SHORT).show();
                         loadCategories();

@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.vhu.smartspend.R;
+import com.vhu.smartspend.database.UserDAO;
 import com.vhu.smartspend.utils.SessionManager;
 
 public class MainActivity extends AppCompatActivity {
@@ -23,8 +24,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         SessionManager sessionManager = new SessionManager(this);
+        UserDAO userDAO = new UserDAO(this);
 
-        if (!sessionManager.isLoggedIn()) {
+        if (!sessionManager.isLoggedIn() || userDAO.getUserById(sessionManager.getUserId()) == null) {
+            sessionManager.logout();
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;

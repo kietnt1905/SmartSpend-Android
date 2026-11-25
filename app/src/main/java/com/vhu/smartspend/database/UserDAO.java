@@ -18,7 +18,7 @@ public class UserDAO {
     }
 
     /**
-     * Đăng ký người dùng mới
+     * Đăng ký người dùng mới và khởi tạo danh mục mặc định riêng cho người dùng đó
      */
     public boolean registerUser(User user) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
@@ -26,11 +26,14 @@ public class UserDAO {
         values.put("username", user.getUsername());
         values.put("password", user.getPassword());
         values.put("full_name", user.getFullName());
-        values.put("role", user.getRole() != null ? user.getRole() : "USER");
         values.put("monthly_budget_limit", user.getMonthlyBudgetLimit() > 0 ? user.getMonthlyBudgetLimit() : 5000000);
 
-        long result = db.insert("users", null, values);
-        return result != -1;
+        long userId = db.insert("users", null, values);
+        if (userId != -1) {
+            DatabaseHelper.seedDefaultCategoriesForUser(db, userId);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -40,7 +43,7 @@ public class UserDAO {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         User user = null;
         Cursor cursor = db.rawQuery(
-                "SELECT user_id, username, password, full_name, role, monthly_budget_limit FROM users WHERE username = ? AND password = ?",
+                "SELECT user_id, username, password, full_name, monthly_budget_limit FROM users WHERE username = ? AND password = ?",
                 new String[]{username, password}
         );
 
@@ -50,10 +53,9 @@ public class UserDAO {
                 String uName = cursor.getString(cursor.getColumnIndexOrThrow("username"));
                 String pwd = cursor.getString(cursor.getColumnIndexOrThrow("password"));
                 String fullName = cursor.getString(cursor.getColumnIndexOrThrow("full_name"));
-                String role = cursor.getString(cursor.getColumnIndexOrThrow("role"));
                 double limit = cursor.getDouble(cursor.getColumnIndexOrThrow("monthly_budget_limit"));
 
-                user = new User(id, uName, pwd, fullName, role, limit);
+                user = new User(id, uName, pwd, fullName, limit);
             }
             cursor.close();
         }
@@ -80,7 +82,7 @@ public class UserDAO {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         User user = null;
         Cursor cursor = db.rawQuery(
-                "SELECT user_id, username, password, full_name, role, monthly_budget_limit FROM users WHERE user_id = ?",
+                "SELECT user_id, username, password, full_name, monthly_budget_limit FROM users WHERE user_id = ?",
                 new String[]{String.valueOf(userId)}
         );
 
@@ -89,10 +91,9 @@ public class UserDAO {
                 String uName = cursor.getString(cursor.getColumnIndexOrThrow("username"));
                 String pwd = cursor.getString(cursor.getColumnIndexOrThrow("password"));
                 String fullName = cursor.getString(cursor.getColumnIndexOrThrow("full_name"));
-                String role = cursor.getString(cursor.getColumnIndexOrThrow("role"));
                 double limit = cursor.getDouble(cursor.getColumnIndexOrThrow("monthly_budget_limit"));
 
-                user = new User(userId, uName, pwd, fullName, role, limit);
+                user = new User(userId, uName, pwd, fullName, limit);
             }
             cursor.close();
         }
@@ -107,7 +108,6 @@ public class UserDAO {
         ContentValues values = new ContentValues();
         values.put("full_name", user.getFullName());
         values.put("password", user.getPassword());
-        values.put("role", user.getRole());
         values.put("monthly_budget_limit", user.getMonthlyBudgetLimit());
 
         int rows = db.update("users", values, "user_id = ?", new String[]{String.valueOf(user.getUserId())});
