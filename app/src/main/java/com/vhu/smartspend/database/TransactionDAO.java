@@ -66,14 +66,16 @@ public class TransactionDAO {
                 new String[]{String.valueOf(userId), like, like, like});
     }
 
-    public List<Category> getCategoriesByType(String type) {
-        return queryCategories("SELECT category_id, name, type, icon_name, color_code FROM categories WHERE type = ? ORDER BY category_id ASC",
-                new String[]{type});
+    public List<Category> getCategoriesByType(int userId, String type) {
+        return queryCategories(
+                "SELECT category_id, name, type, icon_name, color_code FROM categories WHERE user_id = ? AND type = ? ORDER BY category_id ASC",
+                new String[]{String.valueOf(userId), type});
     }
 
-    public List<Category> getAllCategories() {
-        return queryCategories("SELECT category_id, name, type, icon_name, color_code FROM categories ORDER BY category_id ASC",
-                null);
+    public List<Category> getAllCategories(int userId) {
+        return queryCategories(
+                "SELECT category_id, name, type, icon_name, color_code FROM categories WHERE user_id = ? ORDER BY category_id ASC",
+                new String[]{String.valueOf(userId)});
     }
 
     private ContentValues toValues(Transaction t) {

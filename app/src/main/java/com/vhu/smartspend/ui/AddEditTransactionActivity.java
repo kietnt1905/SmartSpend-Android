@@ -162,9 +162,15 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         tvAmountSign.setTextColor(Color.parseColor(isExpense ? "#B91C1C" : "#0A5C36"));
     }
 
+    private int getCurrentUserId() {
+        int userId = getSharedPreferences("SmartSpendPrefs", MODE_PRIVATE).getInt("user_id", 1);
+        return userId > 0 ? userId : 1;
+    }
+
     private void loadCategories() {
-        categories = dao.getCategoriesByType(currentType);
-        if (categories.isEmpty()) categories = dao.getAllCategories();
+        int userId = getCurrentUserId();
+        categories = dao.getCategoriesByType(userId, currentType);
+        if (categories.isEmpty()) categories = dao.getAllCategories(userId);
 
         boolean exists = false;
         for (Category c : categories) {
@@ -173,7 +179,9 @@ public class AddEditTransactionActivity extends AppCompatActivity {
                 break;
             }
         }
-        if (!exists && !categories.isEmpty()) selectedCategoryId = categories.get(0).getCategoryId();
+        if (!exists) {
+            selectedCategoryId = !categories.isEmpty() ? categories.get(0).getCategoryId() : -1;
+        }
         renderCategories();
     }
 
@@ -412,8 +420,7 @@ public class AddEditTransactionActivity extends AppCompatActivity {
             }
         }
 
-        int userId = getSharedPreferences("SmartSpendPrefs", MODE_PRIVATE).getInt("user_id", 1);
-        if (userId <= 0) userId = 1;
+        int userId = getCurrentUserId();
         String dbDate = DateUtils.toDbString(calendar.getTime());
 
         boolean ok;
