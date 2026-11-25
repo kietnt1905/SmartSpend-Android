@@ -11,6 +11,7 @@ public class SessionManager {
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_USERNAME = "username";
     private static final String KEY_FULL_NAME = "full_name";
+    private static final String KEY_AVATAR_URI = "avatar_uri";
 
     private final SharedPreferences sharedPreferences;
     private final SharedPreferences.Editor editor;
@@ -29,6 +30,7 @@ public class SessionManager {
         editor.putInt(KEY_USER_ID, user.getUserId());
         editor.putString(KEY_USERNAME, user.getUsername());
         editor.putString(KEY_FULL_NAME, user.getFullName());
+        editor.putString(KEY_AVATAR_URI, user.getAvatarUri());
         editor.apply();
     }
 
@@ -65,6 +67,21 @@ public class SessionManager {
      */
     public void updateFullName(String fullName) {
         editor.putString(KEY_FULL_NAME, fullName);
+        editor.apply();
+    }
+
+    /**
+     * Lấy URI Ảnh đại diện
+     */
+    public String getAvatarUri() {
+        return sharedPreferences.getString(KEY_AVATAR_URI, "");
+    }
+
+    /**
+     * Cập nhật URI ảnh đại diện trong phiên đăng nhập
+     */
+    public void updateAvatarUri(String avatarUri) {
+        editor.putString(KEY_AVATAR_URI, avatarUri != null ? avatarUri : "");
         editor.apply();
     }
 

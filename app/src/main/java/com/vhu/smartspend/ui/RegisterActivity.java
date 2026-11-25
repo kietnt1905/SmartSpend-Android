@@ -65,6 +65,31 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
+        // Kiểm tra ràng buộc mật khẩu
+        if (!hasMinLength(password)) {
+            edtPassword.setError("Mật khẩu phải từ 8 ký tự trở lên");
+            edtPassword.requestFocus();
+            return;
+        }
+
+        if (!hasUpperCase(password)) {
+            edtPassword.setError("Mật khẩu phải chứa ít nhất 1 chữ cái viết hoa");
+            edtPassword.requestFocus();
+            return;
+        }
+
+        if (!hasDigit(password)) {
+            edtPassword.setError("Mật khẩu phải chứa ít nhất 1 chữ số");
+            edtPassword.requestFocus();
+            return;
+        }
+
+        if (!hasSpecialChar(password)) {
+            edtPassword.setError("Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt");
+            edtPassword.requestFocus();
+            return;
+        }
+
         if (!password.equals(confirmPassword)) {
             edtConfirmPassword.setError("Mật khẩu xác nhận không trùng khớp");
             edtConfirmPassword.requestFocus();
@@ -87,5 +112,25 @@ public class RegisterActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Đăng ký thất bại, vui lòng thử lại!", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    public static boolean hasMinLength(String password) {
+        return password != null && password.length() >= 8;
+    }
+
+    public static boolean hasUpperCase(String password) {
+        return password != null && password.matches(".*[A-Z].*");
+    }
+
+    public static boolean hasDigit(String password) {
+        return password != null && password.matches(".*[0-9].*");
+    }
+
+    public static boolean hasSpecialChar(String password) {
+        return password != null && password.matches(".*[^a-zA-Z0-9].*");
+    }
+
+    public static boolean isValidPassword(String password) {
+        return hasMinLength(password) && hasUpperCase(password) && hasDigit(password) && hasSpecialChar(password);
     }
 }

@@ -21,6 +21,9 @@ public class UserDAO {
             values.put("password", user.getPassword());
             values.put("full_name", user.getFullName());
             values.put("monthly_budget_limit", user.getMonthlyBudgetLimit() > 0 ? user.getMonthlyBudgetLimit() : 5000000);
+            if (user.getAvatarUri() != null) {
+                values.put("avatar_uri", user.getAvatarUri());
+            }
 
             long userId = db.insert("users", null, values);
             if (userId != -1) {
@@ -34,10 +37,12 @@ public class UserDAO {
     public User checkLogin(String username, String password) {
         try (SQLiteDatabase db = dbHelper.getReadableDatabase();
              Cursor c = db.rawQuery(
-                     "SELECT user_id, username, password, full_name, monthly_budget_limit FROM users WHERE username = ? AND password = ?",
+                     "SELECT user_id, username, password, full_name, monthly_budget_limit, avatar_uri FROM users WHERE username = ? AND password = ?",
                      new String[]{username, password})) {
             if (c.moveToFirst()) {
-                return new User(c.getInt(0), c.getString(1), c.getString(2), c.getString(3), c.getDouble(4));
+                User user = new User(c.getInt(0), c.getString(1), c.getString(2), c.getString(3), c.getDouble(4));
+                user.setAvatarUri(c.getString(5));
+                return user;
             }
         }
         return null;
@@ -53,10 +58,12 @@ public class UserDAO {
     public User getUserById(int userId) {
         try (SQLiteDatabase db = dbHelper.getReadableDatabase();
              Cursor c = db.rawQuery(
-                     "SELECT user_id, username, password, full_name, monthly_budget_limit FROM users WHERE user_id = ?",
+                     "SELECT user_id, username, password, full_name, monthly_budget_limit, avatar_uri FROM users WHERE user_id = ?",
                      new String[]{String.valueOf(userId)})) {
             if (c.moveToFirst()) {
-                return new User(c.getInt(0), c.getString(1), c.getString(2), c.getString(3), c.getDouble(4));
+                User user = new User(c.getInt(0), c.getString(1), c.getString(2), c.getString(3), c.getDouble(4));
+                user.setAvatarUri(c.getString(5));
+                return user;
             }
         }
         return null;
@@ -75,6 +82,31 @@ public class UserDAO {
             ContentValues cv = new ContentValues();
             cv.put("monthly_budget_limit", limit);
             db.update("users", cv, "user_id = ?", new String[]{String.valueOf(userId)});
+        }
+    }
+
+    public void updateAvatarUri(int userId, String avatarUri) {
+        try (SQLiteDatabase db = dbHelper.getWritableDatabase()) {
+            ContentValues cv = new ContentValues();
+            cv.put("avatar_uri", avatarUri);
+            db.update("users", cv, "user_id = ?", new String[]{String.valueOf(userId)});
+        }
+    }
+
+    public boolean checkPassword(int userId, String password) {
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase();
+             Cursor c = db.rawQuery("SELECT user_id FROM users WHERE user_id = ? AND password = ?",
+                     new String[]{String.valueOf(userId), password})) {
+            return c.moveToFirst();
+        }
+    }
+
+    public boolean updatePassword(int userId, String newPassword) {
+        try (SQLiteDatabase db = dbHelper.getWritableDatabase()) {
+            ContentValues cv = new ContentValues();
+            cv.put("password", newPassword);
+            int rows = db.update("users", cv, "user_id = ?", new String[]{String.valueOf(userId)});
+            return rows > 0;
         }
     }
 }

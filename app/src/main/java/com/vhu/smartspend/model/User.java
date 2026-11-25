@@ -10,6 +10,7 @@ public class User implements Serializable {
     private String password;
     private String fullName;
     private double monthlyBudgetLimit;
+    private String avatarUri;
 
     public User() {
         this.monthlyBudgetLimit = 5000000;
@@ -28,6 +29,15 @@ public class User implements Serializable {
         this.password = password;
         this.fullName = fullName;
         this.monthlyBudgetLimit = monthlyBudgetLimit;
+    }
+
+    public User(int userId, String username, String password, String fullName, double monthlyBudgetLimit, String avatarUri) {
+        this.userId = userId;
+        this.username = username;
+        this.password = password;
+        this.fullName = fullName;
+        this.monthlyBudgetLimit = monthlyBudgetLimit;
+        this.avatarUri = avatarUri;
     }
 
     public int getUserId() {
@@ -68,5 +78,13 @@ public class User implements Serializable {
 
     public void setMonthlyBudgetLimit(double monthlyBudgetLimit) {
         this.monthlyBudgetLimit = monthlyBudgetLimit;
+    }
+
+    public String getAvatarUri() {
+        return avatarUri;
+    }
+
+    public void setAvatarUri(String avatarUri) {
+        this.avatarUri = avatarUri;
     }
 }

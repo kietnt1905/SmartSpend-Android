@@ -7,6 +7,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -38,6 +39,7 @@ public class HomeFragment extends Fragment {
     private ProgressBar pbHomeBudget;
     private TextView tvRecentCount, tvEmptyRecentTransactions;
     private LinearLayout layoutRecentTransactions;
+    private ImageView imgHomeAvatar;
 
     private BudgetDAO budgetDAO;
     private SessionManager sessionManager;
@@ -57,6 +59,7 @@ public class HomeFragment extends Fragment {
         sessionManager = new SessionManager(requireContext());
 
         NestedScrollView scrollView = view.findViewById(R.id.nestedScrollViewHome);
+        imgHomeAvatar = view.findViewById(R.id.imgHomeAvatar);
         tvUserName = view.findViewById(R.id.tvUserName);
         tvTotalBalanceMain = view.findViewById(R.id.tvTotalBalanceMain);
         tvHomeIncome = view.findViewById(R.id.tvHomeIncome);
@@ -92,6 +95,28 @@ public class HomeFragment extends Fragment {
         if (userId <= 0) userId = 1;
         String fullName = sessionManager.getFullName();
         tvUserName.setText(!fullName.isEmpty() ? fullName : "Khách hàng");
+
+        String avatarUri = sessionManager.getAvatarUri();
+        if (imgHomeAvatar != null) {
+            if (avatarUri != null && !avatarUri.trim().isEmpty()) {
+                try {
+                    imgHomeAvatar.setImageURI(android.net.Uri.parse(avatarUri));
+                    imgHomeAvatar.setPadding(0, 0, 0, 0);
+                    imgHomeAvatar.setImageTintList(null);
+                    imgHomeAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                } catch (Exception e) {
+                    imgHomeAvatar.setImageResource(R.drawable.ic_account);
+                    imgHomeAvatar.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
+                    int pad = CategoryUiHelper.dp(requireContext(), 10);
+                    imgHomeAvatar.setPadding(pad, pad, pad, pad);
+                }
+            } else {
+                imgHomeAvatar.setImageResource(R.drawable.ic_account);
+                imgHomeAvatar.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
+                int pad = CategoryUiHelper.dp(requireContext(), 10);
+                imgHomeAvatar.setPadding(pad, pad, pad, pad);
+            }
+        }
 
         Calendar cal = Calendar.getInstance();
         int month = cal.get(Calendar.MONTH) + 1;

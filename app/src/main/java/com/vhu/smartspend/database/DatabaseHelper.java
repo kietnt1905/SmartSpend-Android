@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String DB_NAME = "smart_spend.db";
-    public static final int DB_VERSION = 2;
+    public static final int DB_VERSION = 3;
 
     public DatabaseHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -26,7 +26,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "username TEXT UNIQUE NOT NULL, " +
                 "password TEXT NOT NULL, " +
                 "full_name TEXT NOT NULL, " +
-                "monthly_budget_limit REAL DEFAULT 5000000)");
+                "monthly_budget_limit REAL DEFAULT 5000000, " +
+                "avatar_uri TEXT)");
 
         // 2. Bảng Categories (Danh mục Thu/Chi riêng theo từng người dùng)
         db.execSQL("CREATE TABLE categories (" +
@@ -80,10 +81,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS budgets");
-        db.execSQL("DROP TABLE IF EXISTS transactions");
-        db.execSQL("DROP TABLE IF EXISTS categories");
-        db.execSQL("DROP TABLE IF EXISTS users");
-        onCreate(db);
+        if (oldVersion < 3) {
+            try {
+                db.execSQL("ALTER TABLE users ADD COLUMN avatar_uri TEXT");
+            } catch (Exception e) {
+                db.execSQL("DROP TABLE IF EXISTS budgets");
+                db.execSQL("DROP TABLE IF EXISTS transactions");
+                db.execSQL("DROP TABLE IF EXISTS categories");
+                db.execSQL("DROP TABLE IF EXISTS users");
+                onCreate(db);
+            }
+        } else {
+            db.execSQL("DROP TABLE IF EXISTS budgets");
+            db.execSQL("DROP TABLE IF EXISTS transactions");
+            db.execSQL("DROP TABLE IF EXISTS categories");
+            db.execSQL("DROP TABLE IF EXISTS users");
+            onCreate(db);
+        }
     }
 }
