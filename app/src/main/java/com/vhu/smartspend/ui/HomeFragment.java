@@ -4,11 +4,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -160,63 +158,39 @@ public class HomeFragment extends Fragment {
         }
         tvEmptyRecentTransactions.setVisibility(View.GONE);
 
+        LayoutInflater inflater = LayoutInflater.from(getContext());
         float d = getResources().getDisplayMetrics().density;
         for (int i = 0; i < list.size(); i++) {
             Transaction tx = list.get(i);
             boolean isIncome = Category.TYPE_INCOME.equalsIgnoreCase(tx.getCategoryType());
 
-            LinearLayout row = new LinearLayout(getContext());
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(0, Math.round(8 * d), 0, Math.round(8 * d));
-            row.setClickable(true);
-            row.setFocusable(true);
+            View row = inflater.inflate(R.layout.item_recent_transaction, layoutRecentTransactions, false);
+            if (i == list.size() - 1) {
+                ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) row.getLayoutParams();
+                lp.bottomMargin = 0;
+                row.setLayoutParams(lp);
+            }
+
+            TextView tvIcon = row.findViewById(R.id.tvTxIcon);
+            TextView tvTitle = row.findViewById(R.id.tvTxTitle);
+            TextView tvSub = row.findViewById(R.id.tvTxSub);
+            TextView tvAmount = row.findViewById(R.id.tvTxAmount);
 
             int borderColor = parseCategoryColor(tx.getCategoryColorCode(), isIncome ? "#0A5C36" : "#C62828");
             GradientDrawable circle = new GradientDrawable();
             circle.setShape(GradientDrawable.OVAL);
-            circle.setColor(Color.argb(30, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
+            circle.setColor(Color.argb(36, Color.red(borderColor), Color.green(borderColor), Color.blue(borderColor)));
             circle.setStroke(Math.round(2 * d), borderColor);
-
-            TextView tvIcon = new TextView(getContext());
-            tvIcon.setLayoutParams(new LinearLayout.LayoutParams(Math.round(40 * d), Math.round(40 * d)));
-            tvIcon.setGravity(Gravity.CENTER);
-            tvIcon.setText(mapEmoji(tx.getCategoryIconName()));
-            tvIcon.setTextSize(17f);
             tvIcon.setBackground(circle);
+            tvIcon.setText(mapEmoji(tx.getCategoryIconName()));
 
-            LinearLayout info = new LinearLayout(getContext());
-            info.setOrientation(LinearLayout.VERTICAL);
-            LinearLayout.LayoutParams infoLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-            infoLp.setMarginStart(Math.round(12 * d));
-            info.setLayoutParams(infoLp);
-
-            TextView tvTitle = new TextView(getContext());
             tvTitle.setText(!TextUtils.isEmpty(tx.getTitle()) ? tx.getTitle() : tx.getCategoryName());
-            tvTitle.setTextColor(Color.parseColor("#1A1A1A"));
-            tvTitle.setTextSize(14f);
-            tvTitle.setTypeface(null, Typeface.BOLD);
-            tvTitle.setMaxLines(1);
-            tvTitle.setEllipsize(TextUtils.TruncateAt.END);
-
             String cat = !TextUtils.isEmpty(tx.getCategoryName()) ? tx.getCategoryName() : "Khác";
-            TextView tvSub = new TextView(getContext());
             tvSub.setText(cat + " • " + DateUtils.formatToDisplay(tx.getTransactionDate()));
-            tvSub.setTextColor(Color.parseColor("#757575"));
-            tvSub.setTextSize(11f);
 
-            info.addView(tvTitle);
-            info.addView(tvSub);
-
-            TextView tvAmount = new TextView(getContext());
             tvAmount.setText((isIncome ? "+" : "-") + CurrencyUtils.formatVND(tx.getAmount()));
-            tvAmount.setTextColor(Color.parseColor(isIncome ? "#2E7D32" : "#C62828"));
-            tvAmount.setTextSize(14f);
-            tvAmount.setTypeface(null, Typeface.BOLD);
-
-            row.addView(tvIcon);
-            row.addView(info);
-            row.addView(tvAmount);
+            tvAmount.setTextColor(Color.parseColor(isIncome ? "#047857" : "#B91C1C"));
+            tvAmount.setBackgroundResource(isIncome ? R.drawable.bg_tx_amount_income : R.drawable.bg_tx_amount_expense);
 
             row.setOnClickListener(v -> {
                 if (getActivity() != null) {
@@ -227,16 +201,6 @@ public class HomeFragment extends Fragment {
             });
 
             layoutRecentTransactions.addView(row);
-
-            if (i < list.size() - 1) {
-                View divider = new View(getContext());
-                LinearLayout.LayoutParams divLp = new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, Math.round(1 * d));
-                divLp.setMargins(0, Math.round(4 * d), 0, Math.round(4 * d));
-                divider.setLayoutParams(divLp);
-                divider.setBackgroundColor(Color.parseColor("#F0F0F0"));
-                layoutRecentTransactions.addView(divider);
-            }
         }
     }
 

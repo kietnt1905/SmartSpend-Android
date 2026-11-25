@@ -102,129 +102,133 @@
         </RelativeLayout>
 
         <!-- 2. Main Balance Card (TỔNG TÀI SẢN KHẢ DỤNG) -->
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:cardBackgroundColor="#004D40"
+            app:cardBackgroundColor="#0A6847"
             app:cardCornerRadius="20dp"
-            app:cardElevation="3dp">
+            app:cardElevation="3dp"
+            app:strokeWidth="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="18dp">
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="TỔNG TÀI SẢN KHẢ DỤNG"
-                        android:textColor="#B2DFDB"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                </RelativeLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="0.03"
+                    android:text="TỔNG TÀI SẢN KHẢ DỤNG"
+                    android:textColor="#D1FAE5"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvTotalBalanceMain"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="85.420.000 đ"
+                    android:layout_marginTop="6dp"
                     android:textColor="#FFFFFF"
-                    android:textSize="32sp"
-                    android:textStyle="bold" />
+                    android:textSize="30sp"
+                    android:textStyle="bold"
+                    tools:text="94,984,669 đ" />
 
-                <!-- Income & Expense Sub Boxes -->
+                <!-- Income & Expense Sub Cards -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
+                    android:baselineAligned="false"
                     android:orientation="horizontal">
 
-                    <!-- Sub Box Income -->
-                    <LinearLayout
+                    <!-- Sub Card Income -->
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
                         android:layout_weight="1"
-                        android:background="#00695C"
-                        android:orientation="vertical"
-                        android:padding="10dp">
+                        app:cardBackgroundColor="#F0FDF4"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="↓ Thu nhập"
-                            android:textColor="#A7F3D0"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
+                            android:orientation="vertical"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="10dp">
 
-                        <TextView
-                            android:id="@+id/tvHomeIncome"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="+38.500.000 đ"
-                            android:textColor="#FFFFFF"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="↓ Thu nhập"
+                                android:textColor="#047857"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
 
-                    <Space
-                        android:layout_width="10dp"
-                        android:layout_height="wrap_content" />
+                            <TextView
+                                android:id="@+id/tvHomeIncome"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="3dp"
+                                android:textColor="#065F46"
+                                android:textSize="14.5sp"
+                                android:textStyle="bold"
+                                tools:text="+96,140,223 đ" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Sub Box Expense -->
-                    <LinearLayout
+                    <!-- Sub Card Expense -->
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
                         android:layout_weight="1"
-                        android:background="#00695C"
-                        android:orientation="vertical"
-                        android:padding="10dp">
+                        app:cardBackgroundColor="#FEF2F2"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="↑ Chi tiêu"
-                            android:textColor="#FFCDD2"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
+                            android:orientation="vertical"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="10dp">
 
-                        <TextView
-                            android:id="@+id/tvHomeExpense"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="-24.850.000 đ"
-                            android:textColor="#FFFFFF"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="↑ Chi tiêu"
+                                android:textColor="#DC2626"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvHomeExpense"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="3dp"
+                                android:textColor="#B91C1C"
+                                android:textSize="14.5sp"
+                                android:textStyle="bold"
+                                tools:text="-1,155,554 đ" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
 
-                <!-- Quick Action Pills Row -->
-
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
-        <!-- 3. Quick Action Grid (5 circular icons with labels below) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:orientation="horizontal"/>
-
-        <!-- 4. Monthly Budget Summary Card -->
+        <!-- 3. Monthly Budget Summary Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="16dp"
             app:cardBackgroundColor="#FFFFFF"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp">
@@ -292,10 +296,11 @@
                     android:id="@+id/pbHomeBudget"
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
-                    android:layout_height="10dp"
+                    android:layout_height="8dp"
                     android:layout_marginTop="8dp"
                     android:max="100"
-                    android:progress="0" />
+                    android:progress="0"
+                    android:progressDrawable="@drawable/bg_progress_bar" />
 
                 <!-- Remaining Budget Tip -->
                 <androidx.cardview.widget.CardView

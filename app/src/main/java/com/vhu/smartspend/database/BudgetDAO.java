@@ -547,10 +547,10 @@ public class BudgetDAO {
                     "FROM categories c " +
                     "LEFT JOIN budgets b ON c.category_id = b.category_id AND b.user_id = ? AND b.month_year = ? " +
                     "LEFT JOIN transactions t ON c.category_id = t.category_id AND t.user_id = ? AND t.transaction_date LIKE ? || '%' " +
-                    "WHERE c.type = 'EXPENSE' " +
+                    "WHERE c.user_id = ? AND c.type = 'EXPENSE' " +
                     "GROUP BY c.category_id, c.name, c.icon_name, c.color_code, b.budget_id, b.month_year, b.limit_amount, b.alert_percent";
 
-            cursor = db.rawQuery(sql, new String[]{String.valueOf(userId), monthYear, String.valueOf(userId), monthYear});
+            cursor = db.rawQuery(sql, new String[]{String.valueOf(userId), monthYear, String.valueOf(userId), monthYear, String.valueOf(userId)});
 
             if (cursor != null && cursor.moveToFirst()) {
                 do {
@@ -667,6 +667,43 @@ public class BudgetDAO {
         public String colorCode;
         public int transactionCount;
         public double totalAmount;
+    }
+
+    /**
+     * Lấy danh sách giao dịch của một danh mục theo tiền tố ngày (yyyy-MM-dd, yyyy-MM hoặc yyyy),
+     * sắp xếp mới nhất lên đầu để hiển thị theo ngày.
+     */
+    public List<Transaction> getTransactionsByCategoryAndDatePrefix(int userId, int categoryId, String datePrefix) {
+        List<Transaction> list = new ArrayList<>();
+        String sql = "SELECT t.*, c.name AS category_name, c.type AS category_type, " +
+                "c.icon_name AS category_icon_name, c.color_code AS category_color_code " +
+                "FROM transactions t " +
+                "LEFT JOIN categories c ON t.category_id = c.category_id " +
+                "WHERE t.user_id = ? AND t.category_id = ? AND t.transaction_date LIKE ? || '%' " +
+                "ORDER BY t.transaction_date DESC, t.transaction_id DESC";
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase();
+             Cursor c = db.rawQuery(sql, new String[]{String.valueOf(userId), String.valueOf(categoryId), datePrefix})) {
+            while (c.moveToNext()) {
+                Transaction t = new Transaction(
+                        c.getInt(c.getColumnIndexOrThrow("transaction_id")),
+                        c.getInt(c.getColumnIndexOrThrow("user_id")),
+                        c.getInt(c.getColumnIndexOrThrow("category_id")),
+                        c.getString(c.getColumnIndexOrThrow("title")),
+                        c.getDouble(c.getColumnIndexOrThrow("amount")),
+                        c.getString(c.getColumnIndexOrThrow("transaction_date")),
+                        c.getString(c.getColumnIndexOrThrow("note")),
+                        c.getString(c.getColumnIndexOrThrow("receipt_uri"))
+                );
+                t.setCategoryName(c.getString(c.getColumnIndexOrThrow("category_name")));
+                t.setCategoryType(c.getString(c.getColumnIndexOrThrow("category_type")));
+                t.setCategoryIconName(c.getString(c.getColumnIndexOrThrow("category_icon_name")));
+                t.setCategoryColorCode(c.getString(c.getColumnIndexOrThrow("category_color_code")));
+                list.add(t);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Lỗi khi getTransactionsByCategoryAndDatePrefix: " + e.getMessage(), e);
+        }
+        return list;
     }
 
     /**
