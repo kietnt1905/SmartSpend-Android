@@ -1,9 +1,211 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.CategoryManageActivity">
+    android:background="@color/setting_bg"
+    android:orientation="vertical"
+    android:padding="16dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Thanh tiêu đề -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginBottom="12dp">
+
+        <ImageButton
+            android:id="@+id/btnBackCategory"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Quay lại"
+            android:padding="8dp"
+            android:src="@drawable/ic_setting_back" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Quản lý danh mục"
+            android:textColor="@color/nav_active"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <!-- Khung nhập liệu danh mục -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="14dp"
+        android:background="@color/setting_card"
+        android:elevation="2dp"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <!-- Xem trước icon/màu + Tên danh mục -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvCategoryPreview"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_marginEnd="10dp"
+                android:gravity="center"
+                android:text="🍔"
+                android:textSize="22sp" />
+
+            <EditText
+                android:id="@+id/edtCategoryName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Nhập tên danh mục..."
+                android:importantForAutofill="no"
+                android:inputType="textCapSentences"
+                android:maxLines="1"
+                android:minHeight="48dp"
+                android:textColor="@color/setting_text_primary"
+                android:textColorHint="@color/setting_text_secondary"
+                android:textSize="15sp" />
+        </LinearLayout>
+
+        <RadioGroup
+            android:id="@+id/rgCategoryType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/rbExpense"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="true"
+                android:text="Chi tiêu"
+                android:textColor="@color/setting_text_primary" />
+
+            <RadioButton
+                android:id="@+id/rbIncome"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Thu nhập"
+                android:textColor="@color/setting_text_primary" />
+        </RadioGroup>
+
+        <!-- Chọn biểu tượng (20 icon mẫu) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:text="Chọn biểu tượng:"
+            android:textColor="@color/setting_text_secondary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/layoutIconPicker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </HorizontalScrollView>
+
+        <!-- Chọn màu viền -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:text="Chọn màu viền:"
+            android:textColor="@color/setting_text_secondary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/layoutColorPicker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <!-- Thao tác Tạo / Lưu và Xóa -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnSaveCategory"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:backgroundTint="#0A5C36"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:maxLines="1"
+                android:text="Tạo"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btnDeleteCategory"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:backgroundTint="#C62828"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:maxLines="1"
+                android:text="Xóa"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="Danh sách danh mục (chạm để chọn):"
+        android:textColor="@color/setting_text_primary"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <!-- GridView hiển thị danh sách danh mục -->
+    <GridView
+        android:id="@+id/gvCategories"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:gravity="center"
+        android:horizontalSpacing="8dp"
+        android:numColumns="3"
+        android:paddingBottom="8dp"
+        android:stretchMode="columnWidth"
+        android:verticalSpacing="8dp" />
+
+</LinearLayout>

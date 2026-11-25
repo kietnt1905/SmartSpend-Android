@@ -9,6 +9,7 @@ public class Category implements Serializable {
     public static final String TYPE_INCOME = "INCOME";
 
     private int categoryId;
+    private int userId;
     private String name;
     private String type;
     private String iconName;
@@ -32,12 +33,29 @@ public class Category implements Serializable {
         this.colorCode = colorCode;
     }
 
+    public Category(int categoryId, int userId, String name, String type, String iconName, String colorCode) {
+        this.categoryId = categoryId;
+        this.userId = userId;
+        this.name = name;
+        this.type = type;
+        this.iconName = iconName;
+        this.colorCode = colorCode;
+    }
+
     public int getCategoryId() {
         return categoryId;
     }
 
     public void setCategoryId(int categoryId) {
         this.categoryId = categoryId;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
     public String getName() {

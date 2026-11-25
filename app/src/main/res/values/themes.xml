@@ -1,9 +1,28 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.SmartSpend" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <style name="Base.Theme.SmartSpend" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/primary</item>
+        <item name="colorSurface">@color/setting_card</item>
+        <item name="android:statusBarColor">@color/setting_bg</item>
+        <item name="android:navigationBarColor">@color/setting_card</item>
     </style>
 
     <style name="Theme.SmartSpend" parent="Base.Theme.SmartSpend" />
+
+    <style name="SmartSpendBottomNavIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/nav_indicator</item>
+        <item name="android:width">56dp</item>
+        <item name="android:height">30dp</item>
+    </style>
+
+    <style name="SmartSpendBottomNavTextActive" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="SmartSpendBottomNavTextInactive" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">normal</item>
+    </style>
 </resources>

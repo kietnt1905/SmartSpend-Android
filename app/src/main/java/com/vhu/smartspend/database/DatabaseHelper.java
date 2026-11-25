@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String DB_NAME = "smart_spend.db";
-    public static final int DB_VERSION = 1;
+    public static final int DB_VERSION = 2;
 
     public DatabaseHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -20,22 +20,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // 1. Bảng Users (Phân quyền & Hạn mức tháng)
+        // 1. Bảng Users (Tài khoản & Hạn mức tháng)
         db.execSQL("CREATE TABLE users (" +
                 "user_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "username TEXT UNIQUE NOT NULL, " +
                 "password TEXT NOT NULL, " +
                 "full_name TEXT NOT NULL, " +
-                "role TEXT DEFAULT 'USER', " +
                 "monthly_budget_limit REAL DEFAULT 5000000)");
 
-        // 2. Bảng Categories (Danh mục Thu/Chi)
+        // 2. Bảng Categories (Danh mục Thu/Chi riêng theo từng người dùng)
         db.execSQL("CREATE TABLE categories (" +
                 "category_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "user_id INTEGER NOT NULL, " +
                 "name TEXT NOT NULL, " +
                 "type TEXT NOT NULL, " +
                 "icon_name TEXT, " +
-                "color_code TEXT)");
+                "color_code TEXT, " +
+                "FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE)");
 
         // 3. Bảng Transactions (Khoản Thu/Chi)
         db.execSQL("CREATE TABLE transactions (" +
@@ -62,15 +63,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "FOREIGN KEY(category_id) REFERENCES categories(category_id) ON DELETE CASCADE)");
 
         // Chèn dữ liệu mẫu (Seed data) phục vụ test và demo ngay lập tức
-        db.execSQL("INSERT INTO users (username, password, full_name, role, monthly_budget_limit) " +
-                "VALUES ('kietvhu', '123456', 'Nguyễn Tuấn Kiệt', 'ADMIN', 4500000)");
-        db.execSQL("INSERT INTO categories (name, type, icon_name, color_code) VALUES " +
-                "('Ăn uống', 'EXPENSE', 'ic_food', '#FF5722'), " +
-                "('Học phí', 'EXPENSE', 'ic_school', '#2196F3'), " +
-                "('Mua sắm', 'EXPENSE', 'ic_shopping', '#9C27B0'), " +
-                "('Di chuyển', 'EXPENSE', 'ic_transport', '#009688'), " +
-                "('Học bổng', 'INCOME', 'ic_award', '#4CAF50'), " +
-                "('Làm thêm', 'INCOME', 'ic_work', '#FFC107')");
+        db.execSQL("INSERT INTO users (username, password, full_name, monthly_budget_limit) " +
+                "VALUES ('kietvhu', '123456', 'Nguyễn Tuấn Kiệt', 4500000)");
+        seedDefaultCategoriesForUser(db, 1);
+    }
+
+    public static void seedDefaultCategoriesForUser(SQLiteDatabase db, long userId) {
+        db.execSQL("INSERT INTO categories (user_id, name, type, icon_name, color_code) VALUES " +
+                "(" + userId + ", 'Ăn uống', 'EXPENSE', 'ic_food', '#FF5722'), " +
+                "(" + userId + ", 'Học phí', 'EXPENSE', 'ic_school', '#2196F3'), " +
+                "(" + userId + ", 'Mua sắm', 'EXPENSE', 'ic_shopping', '#9C27B0'), " +
+                "(" + userId + ", 'Di chuyển', 'EXPENSE', 'ic_transport', '#009688'), " +
+                "(" + userId + ", 'Học bổng', 'INCOME', 'ic_award', '#4CAF50'), " +
+                "(" + userId + ", 'Làm thêm', 'INCOME', 'ic_work', '#FFC107')");
     }
 
     @Override
