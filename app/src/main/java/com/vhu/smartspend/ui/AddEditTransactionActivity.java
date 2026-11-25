@@ -8,10 +8,8 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.Gravity;
-import android.view.MotionEvent;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -21,7 +19,6 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.widget.NestedScrollView;
 
 import com.vhu.smartspend.R;
 import com.vhu.smartspend.database.TransactionDAO;
@@ -43,7 +40,6 @@ public class AddEditTransactionActivity extends AppCompatActivity {
     private TextView tvScreenTitle, tabExpense, tabIncome, tvAmountLabel, tvAmountSign, tvTransactionDate, tvSaveButtonText;
     private EditText edtAmount, edtNote;
     private LinearLayout layoutCategoryGrid;
-    private NestedScrollView scrollCategoryGrid;
     private View layoutReceiptPlaceholder, layoutReceiptPreview;
     private ImageView imgReceiptPreview;
 
@@ -82,15 +78,12 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         tvAmountSign = findViewById(R.id.tvAmountSign);
         edtAmount = findViewById(R.id.edtAmount);
         layoutCategoryGrid = findViewById(R.id.layoutCategoryGrid);
-        scrollCategoryGrid = findViewById(R.id.scrollCategoryGrid);
         tvTransactionDate = findViewById(R.id.tvTransactionDate);
         edtNote = findViewById(R.id.edtNote);
         layoutReceiptPlaceholder = findViewById(R.id.layoutReceiptPlaceholder);
         layoutReceiptPreview = findViewById(R.id.layoutReceiptPreview);
         imgReceiptPreview = findViewById(R.id.imgReceiptPreview);
         tvSaveButtonText = findViewById(R.id.tvSaveButtonText);
-
-        scrollCategoryGrid.setOnTouchListener(nestedScrollTouchListener);
 
         findViewById(R.id.btnCloseTransaction).setOnClickListener(v -> finish());
         tabExpense.setOnClickListener(v -> switchType(Category.TYPE_EXPENSE));
@@ -123,15 +116,6 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         if (dao != null) loadCategories();
     }
 
-    private final View.OnTouchListener nestedScrollTouchListener = (v, event) -> {
-        if (categories.size() > 8) {
-            int action = event.getActionMasked();
-            boolean disallow = action != MotionEvent.ACTION_UP && action != MotionEvent.ACTION_CANCEL;
-            scrollCategoryGrid.getParent().requestDisallowInterceptTouchEvent(disallow);
-        }
-        return false;
-    };
-
     private int getCurrentUserId() {
         int id = sessionManager.getUserId();
         return id > 0 ? id : 1;
@@ -142,7 +126,6 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         currentType = type;
         selectedCategoryId = -1;
         updateTypeUi();
-        scrollCategoryGrid.scrollTo(0, 0);
         loadCategories();
     }
 
@@ -175,16 +158,21 @@ public class AddEditTransactionActivity extends AppCompatActivity {
         renderCategories();
     }
 
+    /**
+     * Hiển thị danh sách danh mục dạng lưới 4 cột bằng layout item_category_pick.xml.
+     */
     private void renderCategories() {
         layoutCategoryGrid.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(this);
         int cols = 4;
+
         for (int i = 0; i < categories.size(); i += cols) {
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
             for (int c = 0; c < cols; c++) {
                 int idx = i + c;
                 if (idx < categories.size()) {
-                    row.addView(buildCategoryItem(categories.get(idx)));
+                    row.addView(createCategoryView(inflater, row, categories.get(idx)));
                 } else {
                     View spacer = new View(this);
                     spacer.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
@@ -193,65 +181,28 @@ public class AddEditTransactionActivity extends AppCompatActivity {
             }
             layoutCategoryGrid.addView(row);
         }
-
-        // Nếu có hơn 8 danh mục thì giới hạn chiều cao 2 hàng để cuộn mượt bên trong
-        if (categories.size() > 8 && layoutCategoryGrid.getChildCount() >= 2) {
-            scrollCategoryGrid.setScrollbarFadingEnabled(false);
-            layoutCategoryGrid.post(() -> {
-                if (layoutCategoryGrid.getChildCount() >= 2) {
-                    int h = layoutCategoryGrid.getChildAt(0).getHeight() + layoutCategoryGrid.getChildAt(1).getHeight();
-                    if (h > 0 && scrollCategoryGrid.getLayoutParams().height != h) {
-                        scrollCategoryGrid.getLayoutParams().height = h;
-                        scrollCategoryGrid.requestLayout();
-                    }
-                }
-            });
-        } else {
-            scrollCategoryGrid.setScrollbarFadingEnabled(true);
-            if (scrollCategoryGrid.getLayoutParams().height != ViewGroup.LayoutParams.WRAP_CONTENT) {
-                scrollCategoryGrid.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                scrollCategoryGrid.requestLayout();
-            }
-        }
     }
 
-    private View buildCategoryItem(Category cat) {
-        LinearLayout item = new LinearLayout(this);
-        item.setOrientation(LinearLayout.VERTICAL);
-        item.setGravity(Gravity.CENTER_HORIZONTAL);
-        item.setPadding(CategoryUiHelper.dp(this, 4), CategoryUiHelper.dp(this, 8),
-                CategoryUiHelper.dp(this, 4), CategoryUiHelper.dp(this, 8));
-        item.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-
-        TextView icon = new TextView(this);
-        int iconSize = CategoryUiHelper.dp(this, 48);
-        icon.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
-        icon.setGravity(Gravity.CENTER);
-        icon.setText(CategoryUiHelper.getEmoji(cat.getIconName()));
-        icon.setTextSize(22f);
-
-        TextView label = new TextView(this);
-        label.setPadding(0, CategoryUiHelper.dp(this, 6), 0, 0);
-        label.setGravity(Gravity.CENTER);
-        label.setText(cat.getName());
-        label.setTextSize(12f);
-        label.setMaxLines(1);
-        label.setEllipsize(TextUtils.TruncateAt.END);
+    private View createCategoryView(LayoutInflater inflater, LinearLayout parent, Category cat) {
+        View item = inflater.inflate(R.layout.item_category_pick, parent, false);
+        TextView tvIcon = item.findViewById(R.id.tvPickCatIcon);
+        TextView tvName = item.findViewById(R.id.tvPickCatName);
 
         boolean selected = cat.getCategoryId() == selectedCategoryId;
         int borderColor = CategoryUiHelper.parseColor(cat.getColorCode(), "#0A5C36");
+
+        tvIcon.setText(CategoryUiHelper.getEmoji(cat.getIconName()));
+        tvIcon.setBackground(CategoryUiHelper.createCircleBg(this, borderColor, selected ? 3 : 2));
+        tvName.setText(cat.getName());
+        tvName.setTextColor(Color.parseColor(selected ? "#0F172A" : "#334155"));
+        tvName.setTypeface(null, selected ? Typeface.BOLD : Typeface.NORMAL);
+
         if (selected) {
             GradientDrawable box = CategoryUiHelper.createRoundedBg(this, CategoryUiHelper.withAlpha(borderColor, 26), 14);
             box.setStroke(CategoryUiHelper.dp(this, 2), borderColor);
             item.setBackground(box);
         }
-        icon.setBackground(CategoryUiHelper.createCircleBg(this, borderColor, selected ? 3 : 2));
-        label.setTextColor(Color.parseColor(selected ? "#0F172A" : "#334155"));
-        label.setTypeface(null, selected ? Typeface.BOLD : Typeface.NORMAL);
 
-        item.addView(icon);
-        item.addView(label);
-        item.setOnTouchListener(nestedScrollTouchListener);
         item.setOnClickListener(v -> {
             selectedCategoryId = cat.getCategoryId();
             renderCategories();

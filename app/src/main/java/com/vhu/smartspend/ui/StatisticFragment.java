@@ -2,7 +2,6 @@ package com.vhu.smartspend.ui;
 
 import android.app.DatePickerDialog;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -13,7 +12,6 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.PopupMenu;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -27,7 +25,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
 import com.vhu.smartspend.R;
+import com.vhu.smartspend.adapter.StatisticCategoryAdapter;
 import com.vhu.smartspend.database.BudgetDAO;
+import com.vhu.smartspend.database.BudgetDAO.CategorySummary;
 import com.vhu.smartspend.model.Category;
 import com.vhu.smartspend.utils.CategoryUiHelper;
 import com.vhu.smartspend.utils.CurrencyUtils;
@@ -62,7 +62,8 @@ public class StatisticFragment extends Fragment {
 
     private BudgetDAO budgetDAO;
     private SessionManager sessionManager;
-    private List<CategoryItem> allCategoryItems = new ArrayList<>();
+    private List<CategorySummary> allCategories = new ArrayList<>();
+    private double currentMainTotal = 0;
 
     private int selectedYear, selectedMonth, selectedDay;
     private int currentTab = TAB_MONTH;
@@ -103,9 +104,7 @@ public class StatisticFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (budgetDAO != null) {
-            loadStatisticData();
-        }
+        if (budgetDAO != null) loadStatisticData();
     }
 
     private void initViews(View view) {
@@ -134,7 +133,6 @@ public class StatisticFragment extends Fragment {
     }
 
     private void setupEvents(View view) {
-        // Chọn tab Ngày / Tháng / Năm
         View.OnClickListener timeListener = v -> {
             if (v.getId() == R.id.tabDay) currentTab = TAB_DAY;
             else if (v.getId() == R.id.tabYear) currentTab = TAB_YEAR;
@@ -148,7 +146,6 @@ public class StatisticFragment extends Fragment {
         tabMonth.setOnClickListener(timeListener);
         tabYear.setOnClickListener(timeListener);
 
-        // Chuyển lùi / tới kỳ thống kê
         view.findViewById(R.id.btnPrevDate).setOnClickListener(v -> {
             adjustDate(-1);
             loadStatisticData();
@@ -159,7 +156,6 @@ public class StatisticFragment extends Fragment {
         });
         view.findViewById(R.id.cardDateRangePicker).setOnClickListener(v -> openDatePicker());
 
-        // Chuyển chế độ Chi tiêu / Thu nhập
         tabExpense.setOnClickListener(v -> {
             isExpenseMode = true;
             updateTabStyles();
@@ -171,7 +167,6 @@ public class StatisticFragment extends Fragment {
             loadStatisticData();
         });
 
-        // Tìm kiếm theo tên danh mục
         svTransactionSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -186,7 +181,6 @@ public class StatisticFragment extends Fragment {
             }
         });
 
-        // Menu sắp xếp (PopupMenu)
         tvSortOrder.setOnClickListener(v -> showSortMenu());
     }
 
@@ -254,8 +248,7 @@ public class StatisticFragment extends Fragment {
             npMonth.setMinValue(1);
             npMonth.setMaxValue(12);
             npMonth.setValue(selectedMonth + 1);
-            String[] labels = {"T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"};
-            npMonth.setDisplayedValues(labels);
+            npMonth.setDisplayedValues(new String[]{"T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"});
             container.addView(createPickerColumn("Tháng", npMonth));
         }
 
@@ -352,10 +345,9 @@ public class StatisticFragment extends Fragment {
         double netBalance = totalIncome - totalExpense;
 
         String activeType = isExpenseMode ? Category.TYPE_EXPENSE : Category.TYPE_INCOME;
-        double mainAmount = isExpenseMode ? totalExpense : totalIncome;
+        currentMainTotal = isExpenseMode ? totalExpense : totalIncome;
         double prevAmount = budgetDAO.getTotalAmountByDatePrefix(userId, activeType, prevPrefix);
 
-        // Cập nhật thẻ tổng quan
         if (isExpenseMode) {
             tvOverviewTitle.setText("Tổng chi tiêu");
             tvTotalExpenseMain.setText(totalExpense > 0 ? "-" + CurrencyUtils.formatVND(totalExpense) : "0 đ");
@@ -393,19 +385,9 @@ public class StatisticFragment extends Fragment {
         cardNetBalance.setCardBackgroundColor(Color.parseColor(isNegativeNet ? "#FEF2F2" : "#EFF6FF"));
         cardNetBalance.setStrokeColor(Color.parseColor(isNegativeNet ? "#FECACA" : "#DBEAFE"));
 
-        updateComparisonBadge(mainAmount, prevAmount);
+        updateComparisonBadge(currentMainTotal, prevAmount);
 
-        // Lấy danh sách danh mục từ SQLite
-        List<BudgetDAO.CategorySummary> summaries = budgetDAO.getCategorySummaryByDatePrefix(userId, activeType, datePrefix);
-        allCategoryItems = new ArrayList<>();
-        for (BudgetDAO.CategorySummary s : summaries) {
-            int percent = mainAmount > 0 ? (int) Math.round((s.totalAmount * 100.0) / mainAmount) : 0;
-            int color = CategoryUiHelper.parseColor(s.colorCode, isExpenseMode ? "#D32F2F" : "#0B8043");
-            allCategoryItems.add(new CategoryItem(
-                    s.categoryId, s.name, s.totalAmount, percent, s.transactionCount,
-                    CategoryUiHelper.getEmoji(s.iconName), color));
-        }
-
+        allCategories = budgetDAO.getCategorySummaryByDatePrefix(userId, activeType, datePrefix);
         filterAndShowList(svTransactionSearch.getQuery().toString());
     }
 
@@ -426,28 +408,34 @@ public class StatisticFragment extends Fragment {
 
     private void filterAndShowList(String query) {
         String keyword = query != null ? query.trim().toLowerCase(Locale.getDefault()) : "";
-        List<CategoryItem> filtered = new ArrayList<>();
-        for (CategoryItem item : allCategoryItems) {
-            if (keyword.isEmpty() || item.name.toLowerCase(Locale.getDefault()).contains(keyword)) {
+        List<CategorySummary> filtered = new ArrayList<>();
+        for (CategorySummary item : allCategories) {
+            String name = item.name != null ? item.name : "";
+            if (keyword.isEmpty() || name.toLowerCase(Locale.getDefault()).contains(keyword)) {
                 filtered.add(item);
             }
         }
 
         filtered.sort((a, b) -> {
-            if (currentSortMode == SORT_PERCENT_ASC) return Double.compare(a.amount, b.amount);
+            if (currentSortMode == SORT_PERCENT_ASC) return Double.compare(a.totalAmount, b.totalAmount);
             if (currentSortMode == SORT_TX_COUNT_DESC) {
-                int cmp = Integer.compare(b.txCount, a.txCount);
-                return cmp != 0 ? cmp : Double.compare(b.amount, a.amount);
+                int cmp = Integer.compare(b.transactionCount, a.transactionCount);
+                return cmp != 0 ? cmp : Double.compare(b.totalAmount, a.totalAmount);
             }
-            if (currentSortMode == SORT_NAME_ASC) return a.name.compareToIgnoreCase(b.name);
-            return Double.compare(b.amount, a.amount);
+            if (currentSortMode == SORT_NAME_ASC) {
+                String nA = a.name != null ? a.name : "";
+                String nB = b.name != null ? b.name : "";
+                return nA.compareToIgnoreCase(nB);
+            }
+            return Double.compare(b.totalAmount, a.totalAmount);
         });
 
         boolean isEmpty = filtered.isEmpty();
         tvEmptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         rvCategorySpending.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
         if (!isEmpty) {
-            rvCategorySpending.setAdapter(new CategoryAdapter(filtered));
+            rvCategorySpending.setAdapter(new StatisticCategoryAdapter(
+                    requireContext(), filtered, currentMainTotal, isExpenseMode, this::openCategoryTransactions));
         }
     }
 
@@ -474,87 +462,16 @@ public class StatisticFragment extends Fragment {
         return String.format(Locale.getDefault(), "%04d-%02d", y, m + 1);
     }
 
-    private void openCategoryTransactions(CategoryItem item) {
+    private void openCategoryTransactions(CategorySummary item) {
+        int color = CategoryUiHelper.parseColor(item.colorCode, isExpenseMode ? "#D32F2F" : "#0B8043");
         Intent intent = new Intent(requireActivity(), CategoryTransactionsActivity.class);
         intent.putExtra(CategoryTransactionsActivity.EXTRA_CATEGORY_ID, item.categoryId);
         intent.putExtra(CategoryTransactionsActivity.EXTRA_CATEGORY_NAME, item.name);
-        intent.putExtra(CategoryTransactionsActivity.EXTRA_CATEGORY_ICON_EMOJI, item.emoji);
-        intent.putExtra(CategoryTransactionsActivity.EXTRA_CATEGORY_COLOR, item.color);
+        intent.putExtra(CategoryTransactionsActivity.EXTRA_CATEGORY_ICON_EMOJI, CategoryUiHelper.getEmoji(item.iconName));
+        intent.putExtra(CategoryTransactionsActivity.EXTRA_CATEGORY_COLOR, color);
         intent.putExtra(CategoryTransactionsActivity.EXTRA_DATE_PREFIX, getDatePrefix(false));
         intent.putExtra(CategoryTransactionsActivity.EXTRA_PERIOD_DISPLAY, tvDateRangeDisplay.getText().toString());
         intent.putExtra(CategoryTransactionsActivity.EXTRA_IS_EXPENSE, isExpenseMode);
         startActivity(intent);
-    }
-
-    private static class CategoryItem {
-        final int categoryId, percentage, txCount, color;
-        final String name, emoji;
-        final double amount;
-
-        CategoryItem(int categoryId, String name, double amount, int percentage, int txCount, String emoji, int color) {
-            this.categoryId = categoryId;
-            this.name = name != null ? name : "";
-            this.amount = amount;
-            this.percentage = percentage;
-            this.txCount = txCount;
-            this.emoji = emoji;
-            this.color = color;
-        }
-    }
-
-    private class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHolder> {
-        private final List<CategoryItem> list;
-
-        CategoryAdapter(List<CategoryItem> list) {
-            this.list = list;
-        }
-
-        @NonNull
-        @Override
-        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_statistic_category, parent, false);
-            return new ViewHolder(v);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull ViewHolder h, int position) {
-            CategoryItem item = list.get(position);
-            h.tvIcon.setText(item.emoji);
-            h.tvIcon.setBackground(CategoryUiHelper.createCircleBg(requireContext(), item.color, 2));
-            h.tvTitle.setText(item.name);
-            h.tvSub.setText(item.txCount + " giao dịch");
-
-            h.tvAmount.setText((isExpenseMode ? "-" : "+") + CurrencyUtils.formatVND(item.amount));
-            h.tvAmount.setTextColor(Color.parseColor(isExpenseMode ? "#B91C1C" : "#047857"));
-
-            h.tvPercent.setText(item.percentage + "%");
-            h.tvPercent.setTextColor(item.color);
-            h.tvPercent.setBackground(CategoryUiHelper.createRoundedBg(
-                    requireContext(), CategoryUiHelper.withAlpha(item.color, 40), 8));
-
-            h.pb.setProgress(item.percentage);
-            h.pb.setProgressTintList(ColorStateList.valueOf(item.color));
-            h.itemView.setOnClickListener(v -> openCategoryTransactions(item));
-        }
-
-        @Override
-        public int getItemCount() {
-            return list.size();
-        }
-
-        class ViewHolder extends RecyclerView.ViewHolder {
-            final TextView tvIcon, tvTitle, tvSub, tvAmount, tvPercent;
-            final ProgressBar pb;
-
-            ViewHolder(@NonNull View itemView) {
-                super(itemView);
-                tvIcon = itemView.findViewById(R.id.tvStatCatIcon);
-                tvTitle = itemView.findViewById(R.id.tvStatCatTitle);
-                tvSub = itemView.findViewById(R.id.tvStatCatSub);
-                tvAmount = itemView.findViewById(R.id.tvStatCatAmount);
-                tvPercent = itemView.findViewById(R.id.tvStatCatPercent);
-                pb = itemView.findViewById(R.id.pbStatCategory);
-            }
-        }
     }
 }

@@ -201,18 +201,11 @@
                             android:textStyle="bold" />
                     </RelativeLayout>
 
-                    <androidx.core.widget.NestedScrollView
-                        android:id="@+id/scrollCategoryGrid"
+                    <LinearLayout
+                        android:id="@+id/layoutCategoryGrid"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:scrollbars="vertical">
-
-                        <LinearLayout
-                            android:id="@+id/layoutCategoryGrid"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical" />
-                    </androidx.core.widget.NestedScrollView>
+                        android:orientation="vertical" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

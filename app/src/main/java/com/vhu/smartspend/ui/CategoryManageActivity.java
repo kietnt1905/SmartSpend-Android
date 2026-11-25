@@ -76,17 +76,6 @@ public class CategoryManageActivity extends AppCompatActivity {
         updateActionButtons();
         loadCategories();
 
-        int preselectId = getIntent().getIntExtra("category_id", -1);
-        if (preselectId != -1) {
-            for (Category c : categoryList) {
-                if (c.getCategoryId() == preselectId) {
-                    selectedCategory = c;
-                    populateInputs(c);
-                    break;
-                }
-            }
-        }
-
         findViewById(R.id.btnBackCategory).setOnClickListener(v -> finish());
         btnSaveCategory.setOnClickListener(v -> saveCategory());
         btnDeleteCategory.setOnClickListener(v -> {
