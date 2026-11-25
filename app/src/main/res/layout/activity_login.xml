@@ -47,9 +47,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
-            app:hintEnabled="false"
-            app:passwordToggleEnabled="true"
-            app:passwordToggleTint="#0A5C36">
+            app:endIconMode="password_toggle"
+            app:endIconTint="#0A5C36"
+            app:hintEnabled="false">
 
             <EditText
                 android:id="@+id/edtPassword"

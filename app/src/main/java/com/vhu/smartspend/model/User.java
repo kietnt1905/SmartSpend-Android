@@ -12,10 +12,6 @@ public class User implements Serializable {
     private double monthlyBudgetLimit;
     private String avatarUri;
 
-    public User() {
-        this.monthlyBudgetLimit = 5000000;
-    }
-
     public User(String username, String password, String fullName, double monthlyBudgetLimit) {
         this.username = username;
         this.password = password;
@@ -29,15 +25,6 @@ public class User implements Serializable {
         this.password = password;
         this.fullName = fullName;
         this.monthlyBudgetLimit = monthlyBudgetLimit;
-    }
-
-    public User(int userId, String username, String password, String fullName, double monthlyBudgetLimit, String avatarUri) {
-        this.userId = userId;
-        this.username = username;
-        this.password = password;
-        this.fullName = fullName;
-        this.monthlyBudgetLimit = monthlyBudgetLimit;
-        this.avatarUri = avatarUri;
     }
 
     public int getUserId() {

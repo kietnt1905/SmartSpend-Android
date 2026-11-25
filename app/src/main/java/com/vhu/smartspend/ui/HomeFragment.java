@@ -1,7 +1,9 @@
 package com.vhu.smartspend.ui;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -96,27 +98,7 @@ public class HomeFragment extends Fragment {
         String fullName = sessionManager.getFullName();
         tvUserName.setText(!fullName.isEmpty() ? fullName : "Khách hàng");
 
-        String avatarUri = sessionManager.getAvatarUri();
-        if (imgHomeAvatar != null) {
-            if (avatarUri != null && !avatarUri.trim().isEmpty()) {
-                try {
-                    imgHomeAvatar.setImageURI(android.net.Uri.parse(avatarUri));
-                    imgHomeAvatar.setPadding(0, 0, 0, 0);
-                    imgHomeAvatar.setImageTintList(null);
-                    imgHomeAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                } catch (Exception e) {
-                    imgHomeAvatar.setImageResource(R.drawable.ic_account);
-                    imgHomeAvatar.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
-                    int pad = CategoryUiHelper.dp(requireContext(), 10);
-                    imgHomeAvatar.setPadding(pad, pad, pad, pad);
-                }
-            } else {
-                imgHomeAvatar.setImageResource(R.drawable.ic_account);
-                imgHomeAvatar.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
-                int pad = CategoryUiHelper.dp(requireContext(), 10);
-                imgHomeAvatar.setPadding(pad, pad, pad, pad);
-            }
-        }
+        bindHomeAvatar(sessionManager.getAvatarUri());
 
         Calendar cal = Calendar.getInstance();
         int month = cal.get(Calendar.MONTH) + 1;
@@ -136,6 +118,24 @@ public class HomeFragment extends Fragment {
         updateBudgetCard(month, expense, budgetLimit > 0 ? budgetLimit : 5000000, cal);
         loadRecentTransactions(userId);
         BudgetAlertHelper.checkAndAlertMonthlyBudget(getContext(), expense, budgetLimit);
+    }
+
+    private void bindHomeAvatar(String avatarUri) {
+        if (imgHomeAvatar == null) return;
+        if (!TextUtils.isEmpty(avatarUri)) {
+            try {
+                imgHomeAvatar.setImageURI(Uri.parse(avatarUri));
+                imgHomeAvatar.setPadding(0, 0, 0, 0);
+                imgHomeAvatar.setImageTintList(null);
+                imgHomeAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                return;
+            } catch (Exception ignored) {
+            }
+        }
+        imgHomeAvatar.setImageResource(R.drawable.ic_account);
+        imgHomeAvatar.setImageTintList(ColorStateList.valueOf(Color.WHITE));
+        int pad = CategoryUiHelper.dp(requireContext(), 10);
+        imgHomeAvatar.setPadding(pad, pad, pad, pad);
     }
 
     private void updateBudgetCard(int month, double expense, double limit, Calendar cal) {

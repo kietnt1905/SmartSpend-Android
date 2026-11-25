@@ -66,26 +66,9 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
         // Kiểm tra ràng buộc mật khẩu
-        if (!hasMinLength(password)) {
-            edtPassword.setError("Mật khẩu phải từ 8 ký tự trở lên");
-            edtPassword.requestFocus();
-            return;
-        }
-
-        if (!hasUpperCase(password)) {
-            edtPassword.setError("Mật khẩu phải chứa ít nhất 1 chữ cái viết hoa");
-            edtPassword.requestFocus();
-            return;
-        }
-
-        if (!hasDigit(password)) {
-            edtPassword.setError("Mật khẩu phải chứa ít nhất 1 chữ số");
-            edtPassword.requestFocus();
-            return;
-        }
-
-        if (!hasSpecialChar(password)) {
-            edtPassword.setError("Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt");
+        String passwordError = getPasswordError(password);
+        if (passwordError != null) {
+            edtPassword.setError(passwordError);
             edtPassword.requestFocus();
             return;
         }
@@ -114,23 +97,24 @@ public class RegisterActivity extends AppCompatActivity {
         }
     }
 
-    public static boolean hasMinLength(String password) {
-        return password != null && password.length() >= 8;
-    }
-
-    public static boolean hasUpperCase(String password) {
-        return password != null && password.matches(".*[A-Z].*");
-    }
-
-    public static boolean hasDigit(String password) {
-        return password != null && password.matches(".*[0-9].*");
-    }
-
-    public static boolean hasSpecialChar(String password) {
-        return password != null && password.matches(".*[^a-zA-Z0-9].*");
-    }
-
-    public static boolean isValidPassword(String password) {
-        return hasMinLength(password) && hasUpperCase(password) && hasDigit(password) && hasSpecialChar(password);
+    /**
+     * Kiểm tra mật khẩu bằng vòng lặp cơ bản: >= 8 ký tự, có chữ hoa, số và ký tự đặc biệt.
+     * Trả về thông báo lỗi nếu chưa đạt, hoặc null nếu hợp lệ.
+     */
+    public static String getPasswordError(String password) {
+        if (password == null || password.length() < 8) {
+            return "Mật khẩu phải từ 8 ký tự trở lên";
+        }
+        boolean hasUpper = false, hasDigit = false, hasSpecial = false;
+        for (int i = 0; i < password.length(); i++) {
+            char c = password.charAt(i);
+            if (Character.isUpperCase(c)) hasUpper = true;
+            else if (Character.isDigit(c)) hasDigit = true;
+            else if (!Character.isLetterOrDigit(c)) hasSpecial = true;
+        }
+        if (!hasUpper) return "Mật khẩu phải chứa ít nhất 1 chữ cái viết hoa";
+        if (!hasDigit) return "Mật khẩu phải chứa ít nhất 1 chữ số";
+        if (!hasSpecial) return "Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt";
+        return null;
     }
 }
