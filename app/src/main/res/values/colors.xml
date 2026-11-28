@@ -2,4 +2,35 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Màu chủ đạo xanh lá sẫm đồng bộ với mẫu -->
+    <color name="primary">#0A5C36</color>
+    <color name="primary_dark">#053820</color>
+    <color name="colorAccent">#4CAF50</color>
+
+    <color name="green_main">#0A5C36</color>
+    <color name="green_light">#E8F5E9</color>
+    <color name="red_main">#D32F2F</color>
+    <color name="red_light">#FFEBEE</color>
+    <color name="orange_main">#F57C00</color>
+    <color name="orange_light">#FFF3E0</color>
+    <color name="blue_main">#1976D2</color>
+    <color name="blue_light">#E3F2FD</color>
+    <color name="gray_bg">#F8F9FA</color>
+    <color name="gray_card">#FFFFFF</color>
+    <color name="gray_text">#616161</color>
+    <color name="gray_border">#E0E0E0</color>
+
+    <!-- Màu màn hình Cài đặt (Light Mode) -->
+    <color name="setting_bg">#F6F8FA</color>
+    <color name="setting_card">#FFFFFF</color>
+    <color name="setting_text_primary">#1A1A1A</color>
+    <color name="setting_text_secondary">#757575</color>
+    <color name="setting_divider">#E2E8F0</color>
+    <color name="setting_pill_bg">#F1F5F9</color>
+
+    <!-- Màu thanh điều hướng & thanh tiêu đề -->
+    <color name="nav_active">#0A5C36</color>
+    <color name="nav_inactive">#64748B</color>
+    <color name="nav_indicator">#E6F4EE</color>
 </resources>
