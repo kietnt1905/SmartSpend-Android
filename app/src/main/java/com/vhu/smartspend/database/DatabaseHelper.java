@@ -4,6 +4,8 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.vhu.smartspend.utils.PasswordUtils;
+
 public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String DB_NAME = "smart_spend.db";
     public static final int DB_VERSION = 3;
@@ -64,8 +66,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "FOREIGN KEY(category_id) REFERENCES categories(category_id) ON DELETE CASCADE)");
 
         // Chèn dữ liệu mẫu (Seed data) phục vụ test và demo ngay lập tức
+        String demoPasswordHash = PasswordUtils.hashPassword("123456");
         db.execSQL("INSERT INTO users (username, password, full_name, monthly_budget_limit) " +
-                "VALUES ('kietvhu', '123456', 'Nguyễn Tuấn Kiệt', 4500000)");
+                "VALUES (?, ?, ?, ?)",
+                new Object[]{"kietvhu", demoPasswordHash, "Nguyễn Tuấn Kiệt", 4500000});
         seedDefaultCategoriesForUser(db, 1);
     }
 
